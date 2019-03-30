@@ -13,7 +13,7 @@ class ComboBoxGeneral:
         self.id = id
         self.texto = texto
 
-
+#hola
 class Camara:
     def __init__(self):
         self.resolucionx = 0
@@ -37,6 +37,7 @@ class ShowCapture(wx.Frame):
         panel = wx.Panel(self, -1)
         self.SetBackgroundColour((255, 255, 255))
 
+        self.tamanoMatriz = dimensiones
         self.capture = capture
         ret, frame = self.capture.read()
 
@@ -156,6 +157,8 @@ class ShowCapture(wx.Frame):
         %s  %s
 
         """ % (obj.id, obj.texto)
+
+        self.tamanoMatriz = obj.id
         print( text)
         cv2.destroyAllWindows()
         cam.velocidadCaptura=15
@@ -191,6 +194,20 @@ class ShowCapture(wx.Frame):
                     pts2 = np.float32([[0,0],[300,0],[0,300],[300,300]])
                     M = cv2.getPerspectiveTransform(pts1,pts2)
                     dst = cv2.warpPerspective(frame,M,(300,300))
+
+                    #DIBUJAR CUADRICULA
+                    nlineas = self.tamanoMatriz+7
+                    tcuadrado = int(700/(nlineas+1))
+                    for x in range(nlineas):
+                        #lineas verticales
+                        pt1 = ((x+1)*tcuadrado,0)
+                        pt2 = ((x+1)*tcuadrado,700)
+                        cv2.line(img,pt1,pt2,(0,0,0),1)
+
+                        #lineas horizontales
+                        pt1 = (0,(x+1)*tcuadrado)
+                        pt2 = (700,(x+1)*tcuadrado)
+                        cv2.line(img,pt1,pt2,(0,0,0),1)
                     cv2.imshow("Transformacion", dst)
                     cv2.imwrite("img"+str(i)+".png", dst)
 
