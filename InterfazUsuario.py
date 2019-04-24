@@ -13,7 +13,7 @@ class ComboBoxGeneral:
         self.id = id
         self.texto = texto
 
-#hola
+
 class Camara:
     def __init__(self):
         self.resolucionx = 0
@@ -37,15 +37,24 @@ class ShowCapture(wx.Frame):
         panel = wx.Panel(self, -1)
         self.SetBackgroundColour((255, 255, 255))
 
-        self.tamanoMatriz = dimensiones
         self.capture = capture
         ret, frame = self.capture.read()
-
-        height, width = frame[:2]
-        self.bmp = wx.Bitmap.FromBuffer(300, 300, frame)
+        self.tamanoMatriz=16
+        height, width = frame.shape[:2]
+        self.orig_height = height
+        self.orig_width = width
+        print('Altura: '+format(height)+'Ancho: '+format(width))
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        self.bmp = wx.Bitmap.FromBuffer(width, height, frame)
         
+
+
         #create image display widgets
         self.ImgControl = statbmp.GenStaticBitmap(panel, wx.ID_ANY, self.bmp)
+
+        self.timer = wx.Timer(self)
+        self.fps = fps
+        self.timer.Start(1000./self.fps)
 
         self.Bind(wx.EVT_TIMER, self.NextFrame)
 
@@ -157,11 +166,7 @@ class ShowCapture(wx.Frame):
         %s  %s
 
         """ % (obj.id, obj.texto)
-
         self.tamanoMatriz = obj.id
-        print( text)
-        cv2.destroyAllWindows()
-        cam.velocidadCaptura=15
 
 
     def NextFrame(self,event):
@@ -183,38 +188,72 @@ class ShowCapture(wx.Frame):
                 if len(approx)==4 and area > 2000:
 
                     rect = cv2.boundingRect(cnt)
-                    print(approx)
                     x,y,w,h = rect
                     #box = cv2.rectangle(frame, (x,y), (x+w,y+h),-1, 0)
                     cropped = frame[y-2: y+h+2, x-2: x+w+2]
 
                     approx1=[approx[0],approx[1],approx[3],approx[2]]
-
+                    print(approx1)
                     pts1 = np.float32(approx1)
                     pts2 = np.float32([[0,0],[300,0],[0,300],[300,300]])
                     M = cv2.getPerspectiveTransform(pts1,pts2)
                     dst = cv2.warpPerspective(frame,M,(300,300))
+                    
+                    img = dst
+                    gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+                    ret,thresh = cv2.threshold(gray,50,255,1)
 
-                    #DIBUJAR CUADRICULA
-                    nlineas = self.tamanoMatriz+7
-                    tcuadrado = int(700/(nlineas+1))
+                    
+                    # Remove some small noise if any.
+                    dilate = cv2.dilate(thresh,None)
+                    erode = cv2.erode(dilate,None)
+
+                    # Find contours with cv2.RETR_CCOMP
+                    contours,hierarchy = cv2.findContours(erode,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
+                    e1x = 100
+                    e2x = 100
+                    e2x = 0
+                    e2y = 0
+
+                    for i,cnt in enumerate(contours):
+                        # Check if it is an external contour and its area is more than 100
+
+                        if hierarchy[0,i,3] == -1 and cv2.contourArea(cnt)>300:
+                            x,y,w,h = cv2.boundingRect(cnt)
+                                                        
+                            if x<e1x and y<e2y:
+                                e1x = x
+                                e1y = y
+                            if x+w>e2x and y+h>e2y:
+                                e2x = x+w
+                                e2y = y+h
+
+                    #cv2.rectangle(img,(e1x,e1y),(e2x,e2y),(0,255,0),2)
+
+                    pts1 = np.float32([[e1x,e1y],[e2x,e1y],[e1x,e2y],[e2x,e2y]])
+                    pts2 = np.float32([[0,0],[300,0],[0,300],[300,300]])
+                    M = cv2.getPerspectiveTransform(pts1,pts2)
+                    dst = cv2.warpPerspective(img,M,(300,300))
+
+                    nlineas = self.tamanoMatriz+3
+                    tcuadrado = int(300/(nlineas+1))
                     for x in range(nlineas):
                         #lineas verticales
                         pt1 = ((x+1)*tcuadrado,0)
-                        pt2 = ((x+1)*tcuadrado,700)
-                        cv2.line(img,pt1,pt2,(0,0,0),1)
+                        pt2 = ((x+1)*tcuadrado,300)
+                        cv2.line(dst,pt1,pt2,(0,255,0),1)
 
                         #lineas horizontales
                         pt1 = (0,(x+1)*tcuadrado)
-                        pt2 = (700,(x+1)*tcuadrado)
-                        cv2.line(img,pt1,pt2,(0,0,0),1)
+                        pt2 = (300,(x+1)*tcuadrado)
+                        cv2.line(dst,pt1,pt2,(0,255,0),1)
+
                     cv2.imshow("Transformacion", dst)
                     cv2.imwrite("img"+str(i)+".png", dst)
+               
 
-                    
-
-            self.bmp.CopyFromBuffer(dst)
-            self.ImgControl.SetBitmap(self.bmp)
+            #self.bmp.CopyFromBuffer(dst)
+            #self.ImgControl.SetBitmap(self.bmp)
 
 
 captura = cv2.VideoCapture(1)
