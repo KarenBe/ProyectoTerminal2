@@ -44,7 +44,7 @@ class ShowCapture(wx.Frame):
         height, width = frame.shape[:2]
         self.orig_height = height
         self.orig_width = width
-        print('Altura: '+format(height)+'Ancho: '+format(width))
+
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         self.bmp = wx.Bitmap.FromBuffer(width, height, frame)
         
@@ -188,21 +188,12 @@ class ShowCapture(wx.Frame):
                 tamanoFinal = (self.tamanoMatriz + 4)*20
                 if len(approx)==4 and area > 2000:
 
-                    rect = cv2.boundingRect(cnt)
-                    x,y,w,h = rect
-                    #box = cv2.rectangle(frame, (x,y), (x+w,y+h),-1, 0)
-                    cropped = frame[y-2: y+h+2, x-2: x+w+2]
 
                     approx1=[approx[0],approx[1],approx[3],approx[2]]
-                    print(approx1)
                     pts1 = np.float32(approx1)
-                    pts2 = np.float32([[0,0],[tamanoFinal,0],[0,tamanoFinal],[tamanoFinal,tamanoFinal]])
+                    pts2 = np.float32([[0,0],[0,tamanoFinal],[tamanoFinal,0],[tamanoFinal,tamanoFinal]])
                     M = cv2.getPerspectiveTransform(pts1,pts2)
                     dst = cv2.warpPerspective(frame,M,(tamanoFinal,tamanoFinal))
-                    
-                    #cv2.imshow("Transformacion", dst)
-
-                    #
                     
                     img = dst
                     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
