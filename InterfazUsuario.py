@@ -250,7 +250,6 @@ class ShowCapture(wx.Frame):
 
                     cv2.imshow("Transformacion", dst)
                     cv2.imwrite("img"+str(i)+".png", dst)
-               
 
             #self.bmp.CopyFromBuffer(dst)
             #self.ImgControl.SetBitmap(self.bmp)
