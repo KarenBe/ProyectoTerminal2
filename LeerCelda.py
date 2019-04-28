@@ -4,9 +4,11 @@ import numpy as np
 from Color import Color
 
 class CeldaSincronizacion:
-    def LeerCeldas(image):
-        tamMatrix=16
-        celdaPatron = tamMatrix + 4
+    def __init__(self,tamMatriz):
+        self.tamMatriz = tamMatriz
+
+    def LeerCeldas(self,image):
+        celdaPatron = self.tamMatriz + 4
         width=np.size(image, 0)
         tamCelda = math.ceil(width/celdaPatron)
 
@@ -16,10 +18,10 @@ class CeldaSincronizacion:
                 x=3
                 y=3
             elif m==1:
-                x=tamMatrix+2
-                y=tamMatrix+2
+                x=self.tamMatriz+2
+                y=self.tamMatriz+2
             else:
-                x=tamMatrix+2
+                x=self.tamMatriz+2
                 y=3
 
             celda = image[(y-1)*tamCelda:y*tamCelda, (x-1)*tamCelda: x*tamCelda]
@@ -33,7 +35,8 @@ class CeldaSincronizacion:
 
 
 #image = cv2.imread('tam16.jpg')
-#coloresReferencia = CeldaSincronizacion.LeerCeldas(image)
+#CS=CeldaSincronizacion(16)
+#coloresReferencia = CS.LeerCeldas(image)
 
 #cv2.waitKey(0)
 #cv2.destroyAllWindows()

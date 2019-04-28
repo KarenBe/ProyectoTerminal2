@@ -254,7 +254,7 @@ class ShowCapture(wx.Frame):
                         pt1 = (0,(x+1)*tcuadrado)
                         pt2 = (tamanoFinal,(x+1)*tcuadrado)
                         cv2.line(dst,pt1,pt2,(0,255,0),1)
-                    sincronizacion=CeldaSincronizacion
+                    sincronizacion=CeldaSincronizacion(self.tamanoMatriz)
                     celdaSincronizacion=sincronizacion.LeerCeldas(dst)
                     cv2.imwrite("img16-"+str(i)+".png", dst)
 
