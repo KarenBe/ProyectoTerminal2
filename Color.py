@@ -22,5 +22,5 @@ class Color:
         palette = np.uint8(centroids)
         quantized = palette[labels.flatten()]
         quantized = quantized.reshape(self.celda.shape)
-        dominant_color = palette[np.argmax(self.itemfreq(labels)[:, -1])]      
+        dominant_color = palette[np.argmax(self.itemfreq(labels)[:, -1])]    
         return dominant_color.tolist()

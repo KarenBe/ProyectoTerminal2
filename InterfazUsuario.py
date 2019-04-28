@@ -5,6 +5,7 @@ import numpy as np
 import os
 import traceback
 import math
+from LeerCelda import CeldaSincronizacion
 
 
 class ComboBoxGeneral:
@@ -253,8 +254,8 @@ class ShowCapture(wx.Frame):
                         pt1 = (0,(x+1)*tcuadrado)
                         pt2 = (tamanoFinal,(x+1)*tcuadrado)
                         cv2.line(dst,pt1,pt2,(0,255,0),1)
-
-                    cv2.imshow("Transformacion", dst)
+                    sincronizacion=CeldaSincronizacion
+                    celdaSincronizacion=sincronizacion.LeerCeldas(dst)
                     cv2.imwrite("img16-"+str(i)+".png", dst)
 
             #self.bmp.CopyFromBuffer(dst)
