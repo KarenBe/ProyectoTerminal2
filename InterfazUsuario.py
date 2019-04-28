@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import os
 import traceback
-
+import math
 
 
 class ComboBoxGeneral:
@@ -39,7 +39,7 @@ class ShowCapture(wx.Frame):
 
         self.capture = capture
         ret, frame = self.capture.read()
-        self.tamanoMatriz=16
+        self.tamanoMatriz = 16
         height, width = frame.shape[:2]
         self.orig_height = height
         self.orig_width = width
@@ -174,7 +174,6 @@ class ShowCapture(wx.Frame):
         ret, self.orig_frame = self.capture.read()
         if ret:
             frame = self.orig_frame 
-
             bilFilter = cv2.bilateralFilter(frame,9,75,75)
             gray = cv2.cvtColor(bilFilter, cv2.COLOR_BGR2GRAY)
 
@@ -185,6 +184,7 @@ class ShowCapture(wx.Frame):
             for i,cnt in enumerate(contours):
                 approx = cv2.approxPolyDP(cnt,0.01*cv2.arcLength(cnt,True),True)
                 area = cv2.contourArea(cnt)
+                tamanoFinal = (self.tamanoMatriz + 4)*20
                 if len(approx)==4 and area > 2000:
 
                     rect = cv2.boundingRect(cnt)
@@ -195,9 +195,13 @@ class ShowCapture(wx.Frame):
                     approx1=[approx[0],approx[1],approx[3],approx[2]]
                     print(approx1)
                     pts1 = np.float32(approx1)
-                    pts2 = np.float32([[0,0],[300,0],[0,300],[300,300]])
+                    pts2 = np.float32([[0,0],[tamanoFinal,0],[0,tamanoFinal],[tamanoFinal,tamanoFinal]])
                     M = cv2.getPerspectiveTransform(pts1,pts2)
-                    dst = cv2.warpPerspective(frame,M,(300,300))
+                    dst = cv2.warpPerspective(frame,M,(tamanoFinal,tamanoFinal))
+                    
+                    #cv2.imshow("Transformacion", dst)
+
+                    #
                     
                     img = dst
                     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
@@ -210,9 +214,9 @@ class ShowCapture(wx.Frame):
 
                     # Find contours with cv2.RETR_CCOMP
                     contours,hierarchy = cv2.findContours(erode,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
-                    e1x = 100
-                    e2x = 100
+                    e1x = 300
                     e2x = 0
+                    e1y = 300
                     e2y = 0
 
                     for i,cnt in enumerate(contours):
@@ -220,8 +224,9 @@ class ShowCapture(wx.Frame):
 
                         if hierarchy[0,i,3] == -1 and cv2.contourArea(cnt)>300:
                             x,y,w,h = cv2.boundingRect(cnt)
-                                                        
-                            if x<e1x and y<e2y:
+                            #cv2.rectangle(img,(x,y),(x+w,y+h),(0,0,255),2) 
+
+                            if x<e1x and y<e1y:
                                 e1x = x
                                 e1y = y
                             if x+w>e2x and y+h>e2y:
@@ -229,27 +234,28 @@ class ShowCapture(wx.Frame):
                                 e2y = y+h
 
                     #cv2.rectangle(img,(e1x,e1y),(e2x,e2y),(0,255,0),2)
+                    #cv2.imshow("Transformacion", img)
 
                     pts1 = np.float32([[e1x,e1y],[e2x,e1y],[e1x,e2y],[e2x,e2y]])
-                    pts2 = np.float32([[0,0],[300,0],[0,300],[300,300]])
+                    pts2 = np.float32([[0,0],[tamanoFinal,0],[0,tamanoFinal],[tamanoFinal,tamanoFinal]])
                     M = cv2.getPerspectiveTransform(pts1,pts2)
-                    dst = cv2.warpPerspective(img,M,(300,300))
+                    dst = cv2.warpPerspective(img,M,(tamanoFinal,tamanoFinal))
 
                     nlineas = self.tamanoMatriz+3
-                    tcuadrado = int(300/(nlineas+1))
+                    tcuadrado = round(tamanoFinal/(nlineas+1))
                     for x in range(nlineas):
                         #lineas verticales
                         pt1 = ((x+1)*tcuadrado,0)
-                        pt2 = ((x+1)*tcuadrado,300)
+                        pt2 = ((x+1)*tcuadrado,tamanoFinal)
                         cv2.line(dst,pt1,pt2,(0,255,0),1)
 
                         #lineas horizontales
                         pt1 = (0,(x+1)*tcuadrado)
-                        pt2 = (300,(x+1)*tcuadrado)
+                        pt2 = (tamanoFinal,(x+1)*tcuadrado)
                         cv2.line(dst,pt1,pt2,(0,255,0),1)
 
                     cv2.imshow("Transformacion", dst)
-                    cv2.imwrite("img"+str(i)+".png", dst)
+                    cv2.imwrite("img16-"+str(i)+".png", dst)
 
             #self.bmp.CopyFromBuffer(dst)
             #self.ImgControl.SetBitmap(self.bmp)
