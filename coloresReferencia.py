@@ -20,18 +20,18 @@ class coloresReferencia:
                 celda = self.frame[0:self.tamCelda, (x*2)*self.tamCelda: ((x*2)+1)*self.tamCelda]
                 colorD = Color(celda)
                 coloresR[x,:] = colorD.colorDominante()
-                cv2.rectangle(img,(30,0),(50,50),colorD.colorDominante(),-1)
-                cv2.imshow('color dominante',img)
-                cv2.imshow('celda', celda)
-                cv2.waitKey(0)
+                #cv2.rectangle(img,(30,0),(50,50),colorD.colorDominante(),-1)
+                #cv2.imshow('color dominante',img)
+                #cv2.imshow('celda', celda)
+                #cv2.waitKey(0)
             else:
                 celda = self.frame[0:self.tamCelda, ((x*2)+1)*self.tamCelda: ((x*2)+2)*self.tamCelda]
                 colorD = Color(celda)
                 coloresR[x,:] = colorD.colorDominante()
-                cv2.rectangle(img,(30,0),(50,50),colorD.colorDominante(),-1)
-                cv2.imshow('color dominante',img)
-                cv2.imshow('celda', celda)
-                cv2.waitKey(0)
+                #cv2.rectangle(img,(30,0),(50,50),colorD.colorDominante(),-1)
+                #cv2.imshow('color dominante',img)
+                #cv2.imshow('celda', celda)
+                #cv2.waitKey(0)
         return coloresR
 
     def CRIzquierda(self):
@@ -43,18 +43,18 @@ class coloresReferencia:
                 celda = self.frame[(x*2)*self.tamCelda: ((x*2)+1)*self.tamCelda , (self.tamanoMatriz+3)*self.tamCelda:(self.tamanoMatriz+4)*self.tamCelda]
                 colorD = Color(celda)
                 coloresR[x,:] = colorD.colorDominante()
-                cv2.rectangle(img,(30,0),(50,50),colorD.colorDominante(),-1)
-                cv2.imshow('color dominante',img)
-                cv2.imshow('celda', celda)
-                cv2.waitKey(0)
+                #cv2.rectangle(img,(30,0),(50,50),colorD.colorDominante(),-1)
+                #cv2.imshow('color dominante',img)
+                #cv2.imshow('celda', celda)
+                #cv2.waitKey(0)
             else:
                 celda = self.frame[((x*2)+1)*self.tamCelda: ((x*2)+2)*self.tamCelda , (self.tamanoMatriz+3)*self.tamCelda:(self.tamanoMatriz+4)*self.tamCelda]
                 colorD = Color(celda)
                 coloresR[x,:] = colorD.colorDominante()
-                cv2.rectangle(img,(30,0),(50,50),colorD.colorDominante(),-1)
-                cv2.imshow('color dominante',img)
-                cv2.imshow('celda', celda)
-                cv2.waitKey(0)
+                #cv2.rectangle(img,(30,0),(50,50),colorD.colorDominante(),-1)
+                #cv2.imshow('color dominante',img)
+                #cv2.imshow('celda', celda)
+                #cv2.waitKey(0)
         return coloresR
 
     def CRInferior(self):
@@ -69,18 +69,18 @@ class coloresReferencia:
                 celda = self.frame[(self.tamanoMatriz+3)*self.tamCelda: (self.tamanoMatriz+4)*self.tamCelda , inicio+((self.numColores-1)*2*self.tamCelda)-self.tamCelda:]
                 colorD = Color(celda)
                 coloresR[x,:] = colorD.colorDominante()
-                cv2.rectangle(img,(30,0),(50,50),colorD.colorDominante(),-1)
-                cv2.imshow('color dominante',img)
-                cv2.imshow('celda', celda)
-                cv2.waitKey(0)
+                #cv2.rectangle(img,(30,0),(50,50),colorD.colorDominante(),-1)
+                #cv2.imshow('color dominante',img)
+                #cv2.imshow('celda', celda)
+                #cv2.waitKey(0)
             else:
                 celda = self.frame[(self.tamanoMatriz+3)*self.tamCelda:(self.tamanoMatriz+4)*self.tamCelda , inicio+(2*(x)*self.tamCelda):(inicio+(2*(x+1)*self.tamCelda))-self.tamCelda]
                 colorD = Color(celda)
                 coloresR[x,:] = colorD.colorDominante()
-                cv2.rectangle(img,(30,0),(50,50),colorD.colorDominante(),-1)
-                cv2.imshow('color dominante',img)
-                cv2.imshow('celda', celda)
-                cv2.waitKey(0)
+                #cv2.rectangle(img,(30,0),(50,50),colorD.colorDominante(),-1)
+                #cv2.imshow('color dominante',img)
+                #cv2.imshow('celda', celda)
+                #cv2.waitKey(0)
         return coloresR
 
     def obtenerColoresReferencia(self):
