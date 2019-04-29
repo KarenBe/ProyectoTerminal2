@@ -36,56 +36,59 @@ class coloresReferencia:
 
     def CRIzquierda(self):
         img = np.zeros((512,512,3), np.uint8)
-
-        tamMatriz = 16 + 4
-        numColores = 8
-        tamCelda = math.ceil(300/tamMatriz)
-        coloresReferencia = np.zeros((numColores,3),int)
-
+        coloresR = np.zeros((self.numColores,3),int)
         #Colores de referencia
-        for x in range (numColores):
-            if x == coloresReferencia-1:
-                celda = self.frame[(x*2)*tamCelda: ((x*2)+1)*tamCelda , (tamMatriz-1)*tamCelda:tamMatriz*tamCelda]
-                colorD = colorDominante(celda)
-                coloresReferencia[x,:] = colorD
-                cv2.rectangle(img,(30,0),(50,50),colorD,-1)
+        for x in range (self.numColores):
+            if x == self.numColores-1:
+                celda = self.frame[(x*2)*self.tamCelda: ((x*2)+1)*self.tamCelda , (self.tamanoMatriz+3)*self.tamCelda:(self.tamanoMatriz+4)*self.tamCelda]
+                colorD = Color(celda)
+                coloresR[x,:] = colorD.colorDominante()
+                cv2.rectangle(img,(30,0),(50,50),colorD.colorDominante(),-1)
                 cv2.imshow('color dominante',img)
                 cv2.imshow('celda', celda)
                 cv2.waitKey(0)
             else:
-                celda = self.frame[((x*2)+1)*tamCelda: ((x*2)+2)*tamCelda , (tamMatriz-1)*tamCelda:tamMatriz*tamCelda]
-                colorD = colorDominante(celda)
-                coloresReferencia[x,:] = colorD
-                cv2.rectangle(img,(30,0),(50,50),colorD,-1)
+                celda = self.frame[((x*2)+1)*self.tamCelda: ((x*2)+2)*self.tamCelda , (self.tamanoMatriz+3)*self.tamCelda:(self.tamanoMatriz+4)*self.tamCelda]
+                colorD = Color(celda)
+                coloresR[x,:] = colorD.colorDominante()
+                cv2.rectangle(img,(30,0),(50,50),colorD.colorDominante(),-1)
                 cv2.imshow('color dominante',img)
                 cv2.imshow('celda', celda)
                 cv2.waitKey(0)
-        return coloresReferencia
+        return coloresR
 
     def CRInferior(self):
         img = np.zeros((512,512,3), np.uint8)
-
-        tamMatriz = 16 + 4
-        numColores = 8
-        tamCelda = math.ceil(300/tamMatriz)
-        coloresReferencia = np.zeros((numColores,3),int)
+        coloresR = np.zeros((self.numColores,3),int)
 
         #Colores de referencia
-        for x in range (numColores):
-            if x == numColores-1:
-                celda = self.frame[((x*2)+1)*tamCelda: ((x*2)+2)*tamCelda , 19*tamCelda:20*tamCelda]
-                colorD = colorDominante(celda)
-                coloresReferencia[x,:] = colorD
-                cv2.rectangle(img,(30,0),(50,50),colorD,-1)
+        inicio = ((self.tamanoMatriz+4)-(2*(self.numColores-1)))*self.tamCelda
+
+        for x in range (self.numColores):
+            if x == self.numColores-1:
+                celda = self.frame[(self.tamanoMatriz+3)*self.tamCelda: (self.tamanoMatriz+4)*self.tamCelda , inicio+((self.numColores-1)*2*self.tamCelda)-self.tamCelda:]
+                colorD = Color(celda)
+                coloresR[x,:] = colorD.colorDominante()
+                cv2.rectangle(img,(30,0),(50,50),colorD.colorDominante(),-1)
                 cv2.imshow('color dominante',img)
                 cv2.imshow('celda', celda)
                 cv2.waitKey(0)
             else:
-                celda = self.frame[((x*2)+1)*tamCelda: ((x*2)+2)*tamCelda , 19*tamCelda:20*tamCelda]
-                colorD = colorDominante(celda)
-                coloresReferencia[x,:] = colorD
-                cv2.rectangle(img,(30,0),(50,50),colorD,-1)
+                celda = self.frame[(self.tamanoMatriz+3)*self.tamCelda:(self.tamanoMatriz+4)*self.tamCelda , inicio+(2*(x)*self.tamCelda):(inicio+(2*(x+1)*self.tamCelda))-self.tamCelda]
+                colorD = Color(celda)
+                coloresR[x,:] = colorD.colorDominante()
+                cv2.rectangle(img,(30,0),(50,50),colorD.colorDominante(),-1)
                 cv2.imshow('color dominante',img)
                 cv2.imshow('celda', celda)
                 cv2.waitKey(0)
-        return coloresReferencia
+        return coloresR
+
+    def obtenerColoresReferencia(self):
+        sup = self.CRSuperior()
+        izq = self.CRIzquierda()
+        inf = self.CRInferior()
+
+        cr = np.concatenate((sup,izq,inf),axis=0)
+
+        return cr
+
