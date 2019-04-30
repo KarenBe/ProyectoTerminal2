@@ -37,10 +37,11 @@ class ShowCapture(wx.Frame):
         wx.Frame.__init__(self, None,-1, title, size = (1350,745), style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MINIMIZE_BOX | wx.MAXIMIZE_BOX))
         panel = wx.Panel(self, -1)
         self.SetBackgroundColour((255, 255, 255))
-
-        self.capture = capture
-        ret, frame = self.capture.read()
         self.tamanoMatriz = 16
+        self.capture = capture
+        self.colores = 2
+        ret, frame = self.capture.read()
+        
         height, width = frame.shape[:2]
         self.orig_height = height
         self.orig_width = width
@@ -58,6 +59,7 @@ class ShowCapture(wx.Frame):
         self.timer.Start(1000./self.fps)
 
         self.Bind(wx.EVT_TIMER, self.NextFrame)
+        
 
         patrones_segundo = [ComboBoxGeneral(15, "15"),
                 ComboBoxGeneral(30, "30")]
@@ -106,9 +108,9 @@ class ShowCapture(wx.Frame):
         self.cb1 = wx.ComboBox(panel,-1,size=(150,100),choices=sampleList)
         self.cb2 = wx.ComboBox(panel,-1,size=(150,100),choices=sampleList)
 
-        self.widgetMaker(self.cb, patrones_segundo)
-        self.widgetMaker(self.cb1, dimensiones)
-        self.widgetMaker(self.cb2, colores)
+        self.widgetMaker(self.cb, patrones_segundo,self.onSelectFrecuencia)
+        self.widgetMaker(self.cb1, dimensiones,self.onSelectTamano)
+        self.widgetMaker(self.cb2, colores,self.onSelectColores)
 
 
         sizer2 = wx.BoxSizer(wx.HORIZONTAL)
@@ -151,23 +153,26 @@ class ShowCapture(wx.Frame):
         panel.SetSizer(sizer2)
 
     #----------------------------------------------------------------------
-    def widgetMaker(self, widget, objects):
-        """"""
+    def widgetMaker(self, widget, objects,accion):
         for obj in objects:
             widget.Append(obj.texto, obj)
-        widget.Bind(wx.EVT_COMBOBOX, self.onSelect)
+        widget.Bind(wx.EVT_COMBOBOX,accion)
 
     #----------------------------------------------------------------------
-    def onSelect(self, event):
-        """"""
-        print( "You selected: " + self.cb.GetStringSelection())
+    def onSelectFrecuencia(self, event):
+        print( "You selected: frecuencia " + self.cb.GetStringSelection())
         obj = self.cb.GetClientData(self.cb.GetSelection())
-        text = """
-        The object's attributes are:
-        %s  %s
+        self.fps = obj.id
 
-        """ % (obj.id, obj.texto)
+    def onSelectTamano(self, event):
+        print( "You selected: Tamaño " + self.cb1.GetStringSelection())
+        obj = self.cb1.GetClientData(self.cb1.GetSelection())
         self.tamanoMatriz = obj.id
+
+    def onSelectColores(self, event):
+        print( "You selected: colores " + self.cb2.GetStringSelection())
+        obj = self.cb2.GetClientData(self.cb2.GetSelection())
+        self.colores = obj.id
 
 
     def NextFrame(self,event):
@@ -179,7 +184,7 @@ class ShowCapture(wx.Frame):
             gray = cv2.cvtColor(bilFilter, cv2.COLOR_BGR2GRAY)
 
             ret,thresh = cv2.threshold(gray,150,255,1)
-            contours,h = cv2.findContours(thresh,1,2)
+            _,contours,h = cv2.findContours(thresh,1,2)
             #cv2.drawContours(frame,contours,-1,(255,0,255),3)
 
             for i,cnt in enumerate(contours):
@@ -195,6 +200,7 @@ class ShowCapture(wx.Frame):
                     M = cv2.getPerspectiveTransform(pts1,pts2)
                     dst = cv2.warpPerspective(frame,M,(tamanoFinal,tamanoFinal))
                     
+                    cv2.imshow("",dst)
                     img = dst
                     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
                     ret,thresh = cv2.threshold(gray,50,255,1)
@@ -205,7 +211,7 @@ class ShowCapture(wx.Frame):
                     erode = cv2.erode(dilate,None)
 
                     # Find contours with cv2.RETR_CCOMP
-                    contours,hierarchy = cv2.findContours(erode,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
+                    _,contours,hierarchy = cv2.findContours(erode,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
                     e1x = 300
                     e2x = 0
                     e1y = 300

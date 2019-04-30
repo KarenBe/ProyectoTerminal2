@@ -27,11 +27,11 @@ class CeldaSincronizacion:
             celda = image[(y-1)*tamCelda:y*tamCelda, (x-1)*tamCelda: x*tamCelda]
             colorD = Color(celda)
             vColor= colorD.colorDominante()
-            print(vColor)
+            #print(vColor)
             cv2.rectangle(image,((x-1)*tamCelda,(y-1)*tamCelda),(x*tamCelda,y*tamCelda),(0,255,0),-1)
             
         cv2.imshow('color dominante',image)
-        cv2.waitKey(0)
+        
 
 
 #image = cv2.imread('tam16.jpg')
