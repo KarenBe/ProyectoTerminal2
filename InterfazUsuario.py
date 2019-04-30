@@ -39,7 +39,7 @@ class ShowCapture(wx.Frame):
         self.SetBackgroundColour((255, 255, 255))
         self.tamanoMatriz = 16
         self.capture = capture
-        self.colores = 2
+        self.numColores = 2
         ret, frame = self.capture.read()
         
         height, width = frame.shape[:2]
@@ -172,7 +172,7 @@ class ShowCapture(wx.Frame):
     def onSelectColores(self, event):
         print( "You selected: colores " + self.cb2.GetStringSelection())
         obj = self.cb2.GetClientData(self.cb2.GetSelection())
-        self.colores = obj.id
+        self.numColores = obj.id
 
 
     def NextFrame(self,event):
@@ -203,7 +203,7 @@ class ShowCapture(wx.Frame):
                     cv2.imshow("",dst)
                     img = dst
                     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-                    ret,thresh = cv2.threshold(gray,50,255,1)
+                    ret,thresh = cv2.threshold(gray,60,255,1)
 
                     
                     # Remove some small noise if any.
@@ -212,6 +212,8 @@ class ShowCapture(wx.Frame):
 
                     # Find contours with cv2.RETR_CCOMP
                     _,contours,hierarchy = cv2.findContours(erode,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
+                    #cv2.drawContours(img,contours,-1,(255,0,255),3)
+                    #cv2.imshow('Segundo',img)
                     e1x = 300
                     e2x = 0
                     e1y = 300
@@ -239,6 +241,8 @@ class ShowCapture(wx.Frame):
                     M = cv2.getPerspectiveTransform(pts1,pts2)
                     dst = cv2.warpPerspective(img,M,(tamanoFinal,tamanoFinal))
 
+                    
+
                     nlineas = self.tamanoMatriz+3
                     tcuadrado = round(tamanoFinal/(nlineas+1))
                     for x in range(nlineas):
@@ -257,15 +261,15 @@ class ShowCapture(wx.Frame):
                     sincronizacion=CeldaSincronizacion(self.tamanoMatriz)
                     celdaSincronizacion=sincronizacion.LeerCeldas(dst)
                     print('Colores celda de sincronización :',celdaSincronizacion)
-                    cv2.imshow('',dst)
+                    
 
-                    #cv2.imwrite("img16-"+str(i)+".png", dst)
+                    cv2.imwrite("img16-"+str(i)+".png", dst)
 
             #self.bmp.CopyFromBuffer(dst)
             #self.ImgControl.SetBitmap(self.bmp)
 
-
-captura = cv2.VideoCapture(1)
+captura = cv2.VideoCapture(0)
+#captura = cv2.VideoCapture('http://192.168.1.72:4747/video')
 
 
 app = wx.App()
