@@ -11,8 +11,8 @@ class CeldaSincronizacion:
         celdaPatron = self.tamMatriz + 4
         width=np.size(image, 0)
         tamCelda = math.ceil(width/celdaPatron)
-
-
+        coloresCS = coloresR = np.zeros((3,3),int)  #colores de las celdas de sincronización
+        
         for m in range (3):
             if m==0:
                 x=3
@@ -27,11 +27,12 @@ class CeldaSincronizacion:
             celda = image[(y-1)*tamCelda:y*tamCelda, (x-1)*tamCelda: x*tamCelda]
             colorD = Color(celda)
             vColor= colorD.colorDominante()
-            #print(vColor)
+            coloresCS[m,:] = colorD.colorDominante()
             cv2.rectangle(image,((x-1)*tamCelda,(y-1)*tamCelda),(x*tamCelda,y*tamCelda),(0,255,0),-1)
-            
-        cv2.imshow('color dominante',image)
         
+        return coloresCS    
+        #cv2.imshow('color dominante',image)
+        #cv2.waitKey(0)
 
 
 #image = cv2.imread('tam16.jpg')

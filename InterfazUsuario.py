@@ -6,7 +6,7 @@ import os
 import traceback
 import math
 from LeerCelda import CeldaSincronizacion
-
+from coloresReferencia import coloresReferencia
 
 class ComboBoxGeneral:
     def __init__(self, id, texto):
@@ -235,7 +235,7 @@ class ShowCapture(wx.Frame):
                     #cv2.imshow("Transformacion", img)
 
                     pts1 = np.float32([[e1x,e1y],[e2x,e1y],[e1x,e2y],[e2x,e2y]])
-                    pts2 = np.float32([[0,0],[tamanoFinal,0],[0,tamanoFinal],[tamanoFinal,tamanoFinal]])
+                    pts2 = np.float32([[0,0],[0,tamanoFinal],[tamanoFinal,0],[tamanoFinal,tamanoFinal]])
                     M = cv2.getPerspectiveTransform(pts1,pts2)
                     dst = cv2.warpPerspective(img,M,(tamanoFinal,tamanoFinal))
 
@@ -251,9 +251,15 @@ class ShowCapture(wx.Frame):
                         pt1 = (0,(x+1)*tcuadrado)
                         pt2 = (tamanoFinal,(x+1)*tcuadrado)
                         cv2.line(dst,pt1,pt2,(0,255,0),1)
+
+                    coloresR = coloresReferencia(dst,self.tamanoMatriz,self.numColores)
+                    print(coloresR.obtenerColoresReferencia())
                     sincronizacion=CeldaSincronizacion(self.tamanoMatriz)
                     celdaSincronizacion=sincronizacion.LeerCeldas(dst)
-                    cv2.imwrite("img16-"+str(i)+".png", dst)
+                    print('Colores celda de sincronización :',celdaSincronizacion)
+                    cv2.imshow('',dst)
+
+                    #cv2.imwrite("img16-"+str(i)+".png", dst)
 
             #self.bmp.CopyFromBuffer(dst)
             #self.ImgControl.SetBitmap(self.bmp)
