@@ -60,9 +60,11 @@ class muestraDeColor:
         indice = int(math.log(self.numColores,2))
         arregloBits = np.zeros((),int)
         arregloColores = self.celda()
+        print("Arreglo colores: ", self.celda())
 
         if self.numColores == 2:
-            bitsporColor = self.arregloColores                
+            a = np.array([[1]])
+            arregloBits = np.concatenate((a,arregloColores), axis=None)
 
         elif self.numColores == 4:
             for x in range((self.tamanoMatriz*self.tamanoMatriz)-3):
@@ -80,7 +82,7 @@ class muestraDeColor:
                     arregloBits = np.concatenate((arregloBits,a),axis=None)
         
         else:
-            for x in range(self.tamanoMatriz*tamanoMatriz):
+            for x in range(self.tamanoMatriz*self.tamanoMatriz-3):
                 if arregloColores[x] == 0:
                     a = np.array([0,0,0])
                     arregloBits = np.concatenate((arregloBits,a),axis=None)
