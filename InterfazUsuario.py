@@ -7,6 +7,7 @@ import traceback
 import math
 from LeerCelda import CeldaSincronizacion
 from coloresReferencia import coloresReferencia
+from SincronizacionCelda import Sincronizacion
 
 class ComboBoxGeneral:
     def __init__(self, id, texto):
@@ -38,6 +39,8 @@ class ShowCapture(wx.Frame):
         panel = wx.Panel(self, -1)
         self.SetBackgroundColour((255, 255, 255))
         self.tamanoMatriz = 16
+        self.sincronizacionAnterior=[[255,255,255],[255,255,255],[255,255,255]]
+        
         self.capture = capture
         self.numColores = 2
         ret, frame = self.capture.read()
@@ -49,7 +52,6 @@ class ShowCapture(wx.Frame):
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         self.bmp = wx.Bitmap.FromBuffer(width, height, frame)
         
-
 
         #create image display widgets
         self.ImgControl = statbmp.GenStaticBitmap(panel, wx.ID_ANY, self.bmp)
@@ -241,7 +243,7 @@ class ShowCapture(wx.Frame):
                     M = cv2.getPerspectiveTransform(pts1,pts2)
                     dst = cv2.warpPerspective(img,M,(tamanoFinal,tamanoFinal))
 
-                    
+                    cv2.imshow("Transformacion", dst)
 
                     nlineas = self.tamanoMatriz+3
                     tcuadrado = round(tamanoFinal/(nlineas+1))
@@ -257,19 +259,28 @@ class ShowCapture(wx.Frame):
                         cv2.line(dst,pt1,pt2,(0,255,0),1)
 
                     coloresR = coloresReferencia(dst,self.tamanoMatriz,self.numColores)
-                    print(coloresR.obtenerColoresReferencia())
+                    #print(coloresR.obtenerColoresReferencia())
                     sincronizacion=CeldaSincronizacion(self.tamanoMatriz)
                     celdaSincronizacion=sincronizacion.LeerCeldas(dst)
-                    print('Colores celda de sincronización :',celdaSincronizacion)
+                    FuncionSincronizacion=Sincronizacion(celdaSincronizacion,self.sincronizacionAnterior)
+                    comparar=FuncionSincronizacion.CompararCeldas()
+                    self.sincronizacionAnterior = celdaSincronizacion
                     
+                    #if comparar==1:
+                     #   print('sincronización igual')
+                    #else: 
+                     #   print('sincronización nuevo')
+                      #  cv2.imwrite("Nuevo16-"+str(i)+".png", dst)
+                        #cv2.imwrite("ANterior16-"+str(i-1)+".png", dst)
+                        
 
-                    cv2.imwrite("img16-"+str(i)+".png", dst)
+                    
 
             #self.bmp.CopyFromBuffer(dst)
             #self.ImgControl.SetBitmap(self.bmp)
 
-captura = cv2.VideoCapture(0)
-#captura = cv2.VideoCapture('http://192.168.1.72:4747/video')
+#captura = cv2.VideoCapture(0)
+captura = cv2.VideoCapture('http://192.168.1.72:4747/video')
 
 
 app = wx.App()
