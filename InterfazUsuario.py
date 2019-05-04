@@ -184,30 +184,33 @@ class ShowCapture(wx.Frame):
             frame = self.orig_frame 
             bilFilter = cv2.bilateralFilter(frame,9,75,75)
             gray = cv2.cvtColor(bilFilter, cv2.COLOR_BGR2GRAY)
+            cv2.imshow('gry',gray)
 
-            ret,thresh = cv2.threshold(gray,150,255,1)
+            ret,thresh = cv2.threshold(gray,210,255,1)
             _,contours,h = cv2.findContours(thresh,1,2)
-            #cv2.drawContours(frame,contours,-1,(255,0,255),3)
+            #cv2.imshow('',thresh)
 
             for i,cnt in enumerate(contours):
-                approx = cv2.approxPolyDP(cnt,0.01*cv2.arcLength(cnt,True),True)
+                approx = cv2.approxPolyDP(cnt,0.05*cv2.arcLength(cnt,True),True)
                 area = cv2.contourArea(cnt)
                 tamanoFinal = (self.tamanoMatriz + 4)*20
-                if len(approx)==4 and area > 2000:
 
-
+                if len(approx)==4 and area > 2000 and area<30000:
+                    
+                    #cv2.drawContours(frame,cnt,-1,(255,0,255),3)
+                    #cv2.imshow('',thresh)
+                    #print(area)
                     approx1=[approx[0],approx[1],approx[3],approx[2]]
                     pts1 = np.float32(approx1)
                     pts2 = np.float32([[0,0],[0,tamanoFinal],[tamanoFinal,0],[tamanoFinal,tamanoFinal]])
                     M = cv2.getPerspectiveTransform(pts1,pts2)
                     dst = cv2.warpPerspective(frame,M,(tamanoFinal,tamanoFinal))
-                    
-                    cv2.imshow("",dst)
+                    cv2.imshow("Imgen",dst)
+
                     img = dst
                     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-                    ret,thresh = cv2.threshold(gray,60,255,1)
+                    ret,thresh = cv2.threshold(gray,155,255,1)
 
-                    
                     # Remove some small noise if any.
                     dilate = cv2.dilate(thresh,None)
                     erode = cv2.erode(dilate,None)
@@ -235,15 +238,15 @@ class ShowCapture(wx.Frame):
                                 e2x = x+w
                                 e2y = y+h
 
-                    #cv2.rectangle(img,(e1x,e1y),(e2x,e2y),(0,255,0),2)
-                    #cv2.imshow("Transformacion", img)
+                    cv2.rectangle(img,(e1x,e1y),(e2x,e2y),(0,255,0),2)
+                    cv2.imshow("Transformacion", img)
 
                     pts1 = np.float32([[e1x,e1y],[e2x,e1y],[e1x,e2y],[e2x,e2y]])
                     pts2 = np.float32([[0,0],[0,tamanoFinal],[tamanoFinal,0],[tamanoFinal,tamanoFinal]])
                     M = cv2.getPerspectiveTransform(pts1,pts2)
-                    dst = cv2.warpPerspective(img,M,(tamanoFinal,tamanoFinal))
+                    dst2 = cv2.warpPerspective(img,M,(tamanoFinal,tamanoFinal))
 
-                    cv2.imshow("Transformacion", dst)
+                    
 
                     nlineas = self.tamanoMatriz+3
                     tcuadrado = round(tamanoFinal/(nlineas+1))
@@ -251,17 +254,18 @@ class ShowCapture(wx.Frame):
                         #lineas verticales
                         pt1 = ((x+1)*tcuadrado,0)
                         pt2 = ((x+1)*tcuadrado,tamanoFinal)
-                        cv2.line(dst,pt1,pt2,(0,255,0),1)
+                        cv2.line(dst2,pt1,pt2,(0,255,0),1)
 
                         #lineas horizontales
                         pt1 = (0,(x+1)*tcuadrado)
                         pt2 = (tamanoFinal,(x+1)*tcuadrado)
-                        cv2.line(dst,pt1,pt2,(0,255,0),1)
+                        cv2.line(dst2,pt1,pt2,(0,255,0),1)
+                    #cv2.imshow("Transformacion", dst2)
 
-                    coloresR = coloresReferencia(dst,self.tamanoMatriz,self.numColores)
+                    coloresR = coloresReferencia(dst2,self.tamanoMatriz,self.numColores)
                     #print(coloresR.obtenerColoresReferencia())
                     sincronizacion=CeldaSincronizacion(self.tamanoMatriz)
-                    celdaSincronizacion=sincronizacion.LeerCeldas(dst)
+                    celdaSincronizacion=sincronizacion.LeerCeldas(dst2)
                     FuncionSincronizacion=Sincronizacion(celdaSincronizacion,self.sincronizacionAnterior)
                     comparar=FuncionSincronizacion.CompararCeldas()
                     self.sincronizacionAnterior = celdaSincronizacion
@@ -279,8 +283,8 @@ class ShowCapture(wx.Frame):
             #self.bmp.CopyFromBuffer(dst)
             #self.ImgControl.SetBitmap(self.bmp)
 
-#captura = cv2.VideoCapture(0)
-captura = cv2.VideoCapture('http://192.168.1.72:4747/video')
+captura = cv2.VideoCapture(0)
+#captura = cv2.VideoCapture('http://192.168.1.72:4747/video')
 
 
 app = wx.App()
