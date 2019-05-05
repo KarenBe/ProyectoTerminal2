@@ -187,7 +187,7 @@ class ShowCapture(wx.Frame):
             cv2.imshow('gry',gray)
 
             ret,thresh = cv2.threshold(gray,210,255,1)
-            _,contours,h = cv2.findContours(thresh,1,2)
+            contours,h = cv2.findContours(thresh,1,2)
             #cv2.imshow('',thresh)
 
             for i,cnt in enumerate(contours):
@@ -217,7 +217,7 @@ class ShowCapture(wx.Frame):
                     erode = cv2.erode(dilate,None)
 
                     # Find contours with cv2.RETR_CCOMP
-                    _,contours,hierarchy = cv2.findContours(erode,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
+                    contours,hierarchy = cv2.findContours(erode,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
                     #cv2.drawContours(img,contours,-1,(255,0,255),3)
                     
                     e1x = 300
@@ -290,8 +290,8 @@ class ShowCapture(wx.Frame):
             #self.bmp.CopyFromBuffer(dst)
             #self.ImgControl.SetBitmap(self.bmp)
 
-#captura = cv2.VideoCapture(0)
-captura = cv2.VideoCapture('http://192.168.1.72:4747/video')
+captura = cv2.VideoCapture(0)
+#captura = cv2.VideoCapture('http://192.168.1.72:4747/video')
 
 
 app = wx.App()
