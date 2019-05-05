@@ -205,20 +205,21 @@ class ShowCapture(wx.Frame):
                     pts2 = np.float32([[0,0],[0,tamanoFinal],[tamanoFinal,0],[tamanoFinal,tamanoFinal]])
                     M = cv2.getPerspectiveTransform(pts1,pts2)
                     dst = cv2.warpPerspective(frame,M,(tamanoFinal,tamanoFinal))
-                    cv2.imshow("Imgen",dst)
+                    
 
                     img = dst
-                    gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-                    ret,thresh = cv2.threshold(gray,155,255,1)
-
+                    gray2 = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+                    ret,thresh2 = cv2.threshold(gray2,155,255,1)
+                    cv2.imshow("GRIS",thresh2)
+                    cv2.imshow("gris2",gray2)
                     # Remove some small noise if any.
-                    dilate = cv2.dilate(thresh,None)
+                    dilate = cv2.dilate(thresh2,None)
                     erode = cv2.erode(dilate,None)
 
                     # Find contours with cv2.RETR_CCOMP
                     _,contours,hierarchy = cv2.findContours(erode,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
                     #cv2.drawContours(img,contours,-1,(255,0,255),3)
-                    #cv2.imshow('Segundo',img)
+                    
                     e1x = 300
                     e2x = 0
                     e1y = 300
@@ -229,17 +230,23 @@ class ShowCapture(wx.Frame):
 
                         if hierarchy[0,i,3] == -1 and cv2.contourArea(cnt)>300:
                             x,y,w,h = cv2.boundingRect(cnt)
-                            #cv2.rectangle(img,(x,y),(x+w,y+h),(0,0,255),2) 
-
-                            if x<e1x and y<e1y:
+                            #cv2.rectangle(img,(x,y),(x+w,y+h),(0,0,255),2)
+                            
+                            #cv2.circle(img,(x,y), 2, (0,0,255), -1)
+                            #print(format(x)+'--'+format(y))
+                            #cv2.imshow('Segundo',img)
+                            if x<=e1x+8 and y<=e1y:
                                 e1x = x
                                 e1y = y
+                                #print(format(x)+'-2-'+format(y))
+                                
                             if x+w>e2x and y+h>e2y:
                                 e2x = x+w
                                 e2y = y+h
+                                cv2.circle(img,(x+w,y+h), 2, (0,255,0), -1)
 
-                    cv2.rectangle(img,(e1x,e1y),(e2x,e2y),(0,255,0),2)
-                    cv2.imshow("Transformacion", img)
+                    #cv2.rectangle(img,(e1x,e1y),(e2x,e2y),(0,255,0),2)
+                    #cv2.imshow('Segundo',img)
 
                     pts1 = np.float32([[e1x,e1y],[e2x,e1y],[e1x,e2y],[e2x,e2y]])
                     pts2 = np.float32([[0,0],[0,tamanoFinal],[tamanoFinal,0],[tamanoFinal,tamanoFinal]])
@@ -260,7 +267,7 @@ class ShowCapture(wx.Frame):
                         pt1 = (0,(x+1)*tcuadrado)
                         pt2 = (tamanoFinal,(x+1)*tcuadrado)
                         cv2.line(dst2,pt1,pt2,(0,255,0),1)
-                    #cv2.imshow("Transformacion", dst2)
+                    cv2.imshow("Transformacion2", dst2)
 
                     coloresR = coloresReferencia(dst2,self.tamanoMatriz,self.numColores)
                     #print(coloresR.obtenerColoresReferencia())
@@ -270,11 +277,11 @@ class ShowCapture(wx.Frame):
                     comparar=FuncionSincronizacion.CompararCeldas()
                     self.sincronizacionAnterior = celdaSincronizacion
                     
-                    #if comparar==1:
-                     #   print('sincronización igual')
-                    #else: 
-                     #   print('sincronización nuevo')
-                      #  cv2.imwrite("Nuevo16-"+str(i)+".png", dst)
+                    if comparar==1:
+                        print('sincronización igual')
+                    else: 
+                        print('sincronización nuevo')
+                        #cv2.imwrite("Nuevo16-"+str(i)+".png", dst)
                         #cv2.imwrite("ANterior16-"+str(i-1)+".png", dst)
                         
 
@@ -283,8 +290,8 @@ class ShowCapture(wx.Frame):
             #self.bmp.CopyFromBuffer(dst)
             #self.ImgControl.SetBitmap(self.bmp)
 
-captura = cv2.VideoCapture(0)
-#captura = cv2.VideoCapture('http://192.168.1.72:4747/video')
+#captura = cv2.VideoCapture(0)
+captura = cv2.VideoCapture('http://192.168.1.72:4747/video')
 
 
 app = wx.App()
