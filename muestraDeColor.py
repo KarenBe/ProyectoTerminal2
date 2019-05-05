@@ -25,7 +25,7 @@ class muestraDeColor:
     
     def celda(self):
         matriz = self.frame[2*self.tamCelda:(2+self.tamanoMatriz)*self.tamCelda,2*self.tamCelda:(2+self.tamanoMatriz)*self.tamCelda]
-        cv2.imshow('',matriz)
+        #cv2.imshow('',matriz)
         coloresR1 = self.coloresReferencia[0:self.numColores,0:]
         coloresR2 = self.coloresReferencia[self.numColores:2*self.numColores,0:]
         coloresR3 = self.coloresReferencia[2*self.numColores:,0:]
@@ -58,53 +58,54 @@ class muestraDeColor:
     
     def mapeoaBit(self):
         indice = int(math.log(self.numColores,2))
-        arregloBits = np.zeros((),int)
+        arregloBits = np.zeros((),dtype = np.uint8)
         arregloColores = self.celda()
-        print("Arreglo colores: ", self.celda())
+        print("aqui")
 
         if self.numColores == 2:
-            a = np.array([[1]])
+            a = np.array([1])
             arregloBits = np.concatenate((a,arregloColores), axis=None)
 
         elif self.numColores == 4:
             for x in range((self.tamanoMatriz*self.tamanoMatriz)-3):
                 if arregloColores[x] == 1:
-                    a = np.array([[0,0]])
+                    a = np.array([0,0],dtype=np.uint8)
                     arregloBits = np.concatenate((arregloBits,a),axis=None)
                 elif arregloColores[x] == 2:
-                    a = np.array([[0,1]])
+                    a = np.array([0,1],dtype=np.uint8)
                     arregloBits = np.concatenate((arregloBits,a),axis=None)
                 elif arregloColores[x] == 3:
-                    a = np.array([[1,0]])
+                    a = np.array([1,0],dtype=np.uint8)
                     arregloBits = np.concatenate((arregloBits,a),axis=None)
                 else:
-                    a = np.array([[1,1]])
+                    a = np.array([1,1],dtype=np.uint8)
                     arregloBits = np.concatenate((arregloBits,a),axis=None)
         
         else:
             for x in range(self.tamanoMatriz*self.tamanoMatriz-3):
                 if arregloColores[x] == 0:
-                    a = np.array([0,0,0])
+                    a = np.array([0,0,0],dtype=np.uint8)
                     arregloBits = np.concatenate((arregloBits,a),axis=None)
                 elif arregloColores[x] == 1:
-                    a = np.array([0,0,1])
+                    a = np.array([0,0,1],dtype=np.uint8)
                     arregloBits = np.concatenate((arregloBits,a),axis=None)
                 elif arregloColores[x] == 2:
-                    a = np.array([0,1,0])
+                    a = np.array([0,1,0],dtype=np.uint8)
                     arregloBits = np.concatenate((arregloBits,a),axis=None)
                 elif arregloColores[x] == 3:
-                    a = np.array([0,1,1])
+                    a = np.array([0,1,1],dtype=np.uint8)
                     arregloBits = np.concatenate((arregloBits,a),axis=None)
                 elif arregloColores[x] == 4:
-                    a = np.array([1,0,0])
+                    a = np.array([1,0,0],dtype=np.uint8)
                     arregloBits = np.concatenate((arregloBits,a),axis=None)
                 elif arregloColores[x] == 5:
-                    a = np.array([1,0,1])
+                    a = np.array([1,0,1],dtype=np.uint8)
                     arregloBits = np.concatenate((arregloBits,a),axis=None)
                 elif arregloColores[x] == 6:
-                    a = np.array([1,1,0])
+                    a = np.array([1,1,0],dtype=np.uint8)
                     arregloBits = np.concatenate((arregloBits,a),axis=None)
                 else:
-                    a = np.array([1,1,1])
+                    a = np.array([1,1,1],dtype=np.uint8)
                     arregloBits = np.concatenate((arregloBits,a),axis=None)
+
         return arregloBits[1:]

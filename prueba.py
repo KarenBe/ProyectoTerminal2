@@ -8,18 +8,22 @@ tamCelda = 20
 tamMatriz = 16
 numColores = 8
 
-image = cv2.imread('Imagen0.png')
+image = cv2.imread('16.png')
 imagen = coloresReferencia(image,tamMatriz,numColores)
 
 coloresR = imagen.obtenerColoresReferencia()
-print("Colores referencia: ", coloresR)
-cv2.imshow('original', image)
-
 matriz = muestraDeColor(image,tamMatriz,coloresR,numColores)
-trama = Trama(matriz.mapeoaBit(),tamMatriz,numColores)
+bits = matriz.mapeoaBit()
+trama = Trama(bits,tamMatriz,numColores)
+
 trama.obtenerCampos()
 
-print("arreglo bits: ", matriz.mapeoaBit(),matriz.mapeoaBit().size)
+if trama.tramaValida == True:
+    print("valida")
+else:
+    print("invalida")
+
+#print("arreglo bits: ", bits , bits.size)
 
 
 cv2.waitKey(0)
