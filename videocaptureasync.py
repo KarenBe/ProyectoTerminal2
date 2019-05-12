@@ -2,11 +2,16 @@ import threading
 import cv2
 
 class VideoCaptureAsync:
-    def __init__(self, src=0, width=640, height=480):
+    def __init__(self, src=0, width=640, height=480, fps=30):
         self.src = src
         self.cap = cv2.VideoCapture(self.src)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        self.cap.set(cv2.CAP_PROP_FPS, fps)
+
+        print('Ancho: ',self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        print('Alto: ',self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        print('FPS: ',self.cap.get(cv2.CAP_PROP_FPS))
         self.grabbed, self.frame = self.cap.read()
         self.started = False
         self.read_lock = threading.Lock()
@@ -40,5 +45,8 @@ class VideoCaptureAsync:
         self.started = False
         self.thread.join()
 
-    def __exit__(self, exec_type, exc_value, traceback):
+    def isOpened(self):
+        return self.cap.isOpened()
+
+    def exit(self):
         self.cap.release()
