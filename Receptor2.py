@@ -6,12 +6,13 @@ from tkinter import messagebox as mb
 from time import sleep
 from videocaptureasync import VideoCaptureAsync
 from PIL import Image, ImageTk
+from os import remove
 import threading,time
 
 import cv2
 import tkinter as tkk
 import sys
-import numpy
+import numpy as np
 import math
 
 from LeerCelda import CeldaSincronizacion
@@ -19,6 +20,7 @@ from coloresReferencia import coloresReferencia
 from SincronizacionCelda import Sincronizacion
 from muestraDeColor import muestraDeColor
 from Trama import Trama
+from rotarImagen import rotarImagen
 global tramaGuardada
 tramaGuardada = 0
 
@@ -30,6 +32,12 @@ class Interfaz:
         self.Interfaz.configure(bg='#636363')
         self.cap = None
         self.hilo2 = None
+        self.sincronizacionAnterior=[[255,255,255],[255,255,255],[255,255,255]]
+        self.tramasRecibidas = np.array([],dtype=int)
+        self.cargaUtil = []
+        self.datos = np.array([],dtype=int)
+        self.frames = []
+        self.cont = 0
 
         #PATRONES POR SEGUNDO
         self.etiqueta = Label(text="FPS: ").place(relx=0.1,rely=0.15)
@@ -49,7 +57,8 @@ class Interfaz:
         self.numeroColores.place(relx=0.2,rely=0.25)
         self.numeroColores.current(0)
         
-        segundos = 40
+        segundos = 10
+        self.borrarImagenes()
         self.hilo = threading.Thread(target=self.IniciarCaptura, 
                             args=(segundos,))
 
@@ -64,6 +73,14 @@ class Interfaz:
         self.l1.place(relx=0.4,rely=0.005,width=500, height=500)
         
         self.Interfaz.mainloop()
+
+    def borrarImagenes(self):
+        c=0
+        img = cv2.imread('Nuevo16-0.png')
+        while img is not None:
+            remove('Nuevo16-'+str(c)+'.png')
+            c = c+1
+            img = cv2.imread('Nuevo16-'+str(c)+'.png')
         
     def frombits(self,bits):
         chars = []
@@ -73,11 +90,11 @@ class Interfaz:
         return ''.join(chars)
 
     def leerTramas(self,dst2):
-        imagen = coloresReferencia(dst2,self.tamanoMatriz.get(),self.numColores.get())
+        imagen = coloresReferencia(dst2,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
         coloresR = imagen.obtenerColoresReferencia()
-        matriz = muestraDeColor(dst2,self.tamanoMatriz.get(),coloresR,self.numColores.get())
+        matriz = muestraDeColor(dst2,int(self.tamanoMatriz.get()),coloresR,int(self.numeroColores.get()))
         bits = matriz.mapeoaBit()
-        trama = Trama(bits,self.tamanoMatriz.get(),self.numColores.get())
+        trama = Trama(bits,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
         
         trama.obtenerCampos()
 
@@ -107,19 +124,21 @@ class Interfaz:
             print("invalida")
         
     def leerFrames(self):
-        img = cv2.imread('Nuevo16-0.png')
-        c=1
-        while img is not None:
-            self.leerTramas(img)
-            img = cv2.imread('Nuevo16-'+str(c)+'.png')
-            c = c+1
+        #img = cv2.imread('Nuevo16-0.png')
+        #c=1
+        #while img is not None:
+        img = cv2.imread('Nuevo16-'+str( threading.current_thread().getName())+'.png')
+        self.leerTramas(img)
+        print("Nuevo16-"+str( threading.current_thread().getName()))
+        print("******************************************")
+        #c = c+1
 
     def IniciarCaptura(self,segundos):
         
         if self.patronesPorSegundo.get() == 30:
-            self.cap = VideoCaptureAsync(0,1920,1080,30)
+            self.cap = VideoCaptureAsync(1,1920,1080,30)
         else:
-            self.cap = VideoCaptureAsync(0,1280,720,60)
+            self.cap = VideoCaptureAsync(1,1280,720,60)
         self.cap.start()
 
         contador = 0
@@ -145,7 +164,7 @@ class Interfaz:
                         cv2.imwrite("NuevoGris.png", gray)
 
                         ret,thresh = cv2.threshold(gray,200,255,1)
-                        _,contours,h = cv2.findContours(thresh,1,2)
+                        contours,h = cv2.findContours(thresh,1,2)
                         cv2.imshow('vhf',thresh)
                         cv2.imwrite("NuevoNegro.png", thresh)
 
@@ -175,7 +194,7 @@ class Interfaz:
                                 erode = cv2.erode(dilate,None)
 
                                 # Find contours with cv2.RETR_CCOMP
-                                _,contours,hierarchy = cv2.findContours(erode,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
+                                contours,hierarchy = cv2.findContours(erode,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
                                 #cv2.drawContours(img,contours,-1,(255,0,255),3)
                         
                                 e1x = 300
@@ -213,11 +232,10 @@ class Interfaz:
 
                                 rows,cols = dst2.shape[:2]
 
-                                #M = cv2.getRotationMatrix2D((cols/2,rows/2),-9,1)
-                                #dst2 = cv2.warpAffine(dst2,M,(cols,rows))
-                        
+                                r = rotarImagen(dst2,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
+                                dst2 = r.rotar()
 
-                                nlineas = self.tamanoMatriz.get()+3
+                                nlineas = int(self.tamanoMatriz.get())+3
                                 tcuadrado = round(tamanoFinal/(nlineas+1))
                                 for x in range(nlineas):
                                 #lineas verticales
@@ -231,7 +249,7 @@ class Interfaz:
                                     cv2.line(dst2,pt1,pt2,(0,255,0),1)
                                 cv2.imshow("Transformacion2", dst2)
 
-                                coloresR = coloresReferencia(dst2,self.tamanoMatriz.get(),self.numColores.get())
+                                coloresR = coloresReferencia(dst2,self.tamanoMatriz.get(),self.numeroColores.get())
                                 #print(coloresR.obtenerColoresReferencia())
                                 sincronizacion=CeldaSincronizacion(self.tamanoMatriz.get())
                                 celdaSincronizacion=sincronizacion.LeerCeldas(dst2)
@@ -239,23 +257,27 @@ class Interfaz:
                                 comparar=FuncionSincronizacion.CompararCeldas()
                                 self.sincronizacionAnterior = celdaSincronizacion
                         
-                                if comparar==1:
-                                    print('sincronización igual')
-                                    if self.cont == 1:
-                                        hilo2 = threading.Thread(target=self.leerFrames)
-                                        hilo2.start()
-                                    cv2.imwrite("Nuevo16-"+str(self.cont)+".png", dst2)
-                                    print("Nuevo16-"+str(self.cont))
-                                    self.cont = self.cont+1
+                                #if comparar==1:
+                                print('sincronización igual')
+                                #if self.cont == 1:
+                                #    hilo2 = threading.Thread(target=self.leerFrames)
+                                #    hilo2.start()
+                                cv2.imwrite("Nuevo16-"+str(self.cont)+".png", dst2)
+                                print("Nuevo16-"+str(self.cont))
+                                   
+                                hilo2 = threading.Thread(name='%s' %self.cont, 
+                                                        target=self.leerFrames)    
+                                hilo2.start()
+                                self.cont = self.cont+1
 
-                                else: 
-                                    print('sincronización nuevo')
-                                    if self.cont == 1:
-                                        hilo2 = threading.Thread(target=self.leerFrames)
-                                        hilo2.start()
-                                    cv2.imwrite("Nuevo16-"+str(self.cont)+".png", dst2)
-                                    print("Nuevo16-"+str(self.cont))
-                                    self.cont = self.cont+1
+                                #else: 
+                                #    print('sincronización nuevo')
+                                #    if self.cont == 1:
+                                #        hilo2 = threading.Thread(target=self.leerFrames)
+                                #        hilo2.start()
+                                #    cv2.imwrite("Nuevo16-"+str(self.cont)+".png", dst2)
+                                #    print("Nuevo16-"+str(self.cont))
+                                #    self.cont = self.cont+1
 
                 except KeyboardInterrupt:
                     #pass

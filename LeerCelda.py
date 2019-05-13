@@ -5,7 +5,7 @@ from Color import Color
 
 class CeldaSincronizacion:
     def __init__(self,tamMatriz):
-        self.tamMatriz = tamMatriz
+        self.tamMatriz = int(tamMatriz)
 
     def LeerCeldas(self,image):
         celdaPatron = self.tamMatriz + 4
@@ -28,7 +28,7 @@ class CeldaSincronizacion:
             colorD = Color(celda)
             vColor= colorD.colorDominante()
             coloresCS[m,:] = colorD.colorDominante()
-            cv2.rectangle(image,((x-1)*tamCelda,(y-1)*tamCelda),(x*tamCelda,y*tamCelda),(0,255,0),-1)
+            #cv2.rectangle(image,((x-1)*tamCelda,(y-1)*tamCelda),(x*tamCelda,y*tamCelda),(0,255,0),-1)
         
         return coloresCS    
         #cv2.imshow('color dominante',image)

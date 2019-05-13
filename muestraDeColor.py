@@ -60,7 +60,6 @@ class muestraDeColor:
         indice = int(math.log(self.numColores,2))
         arregloBits = np.zeros((),dtype = np.uint8)
         arregloColores = self.celda()
-        print("aqui")
 
         if self.numColores == 2:
             a = np.array([1])

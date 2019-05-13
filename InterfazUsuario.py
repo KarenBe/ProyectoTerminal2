@@ -6,6 +6,7 @@ import os
 import traceback
 import math
 import threading,time
+from os import remove
 
 from LeerCelda import CeldaSincronizacion
 from coloresReferencia import coloresReferencia
@@ -14,6 +15,14 @@ from muestraDeColor import muestraDeColor
 from Trama import Trama
 global tramaGuardada
 tramaGuardada = 0
+
+def borrarImagenes():
+        c=0
+        img = cv2.imread('Nuevo16-0.png')
+        while img is not None:
+            remove('Nuevo16-'+str(c)+'.png')
+            c = c+1
+            img = cv2.imread('Nuevo16-'+str(c)+'.png')
 
 class ComboBoxGeneral:
     def __init__(self, id, texto):
@@ -44,11 +53,11 @@ class ShowCapture(wx.Frame):
         wx.Frame.__init__(self, None,-1, title, size = (1350,745), style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MINIMIZE_BOX | wx.MAXIMIZE_BOX))
         panel = wx.Panel(self, -1)
         self.SetBackgroundColour((255, 255, 255))
-        self.tamanoMatriz = 14
+        self.tamanoMatriz = 16
         self.sincronizacionAnterior=[[255,255,255],[255,255,255],[255,255,255]]
         
         self.capture = capture
-        self.numColores = 2
+        self.numColores = 8
         ret, frame = self.capture.read()
         
         height, width = frame.shape[:2]
@@ -70,7 +79,7 @@ class ShowCapture(wx.Frame):
         self.fps = fps
         self.timer.Start(1000./self.fps)
 
-        segundos = 40
+        segundos = 5
         hilo = threading.Thread(target=self.NextFrame, 
                             args=(segundos,))
         
@@ -236,8 +245,11 @@ class ShowCapture(wx.Frame):
         img = cv2.imread('Nuevo16-0.png')
         c=1
         while img is not None:
+            
             self.leerTramas(img)
             img = cv2.imread('Nuevo16-'+str(c)+'.png')
+            print("Nuevo16-"+str(c))
+            print("******************************************")
             c = c+1
 
     def NextFrame(self,segundos):
@@ -266,7 +278,7 @@ class ShowCapture(wx.Frame):
                     
                     approx = cv2.approxPolyDP(cnt,0.05*cv2.arcLength(cnt,True),True)
                     area = cv2.contourArea(cnt)
-                    tamanoFinal = (self.tamanoMatriz + 4)*20
+                    tamanoFinal = (self.tamanoMatriz + 8)*20
                     #print(area)
                     if len(approx)==4 and area > 9000 and area<270000:
                         
@@ -279,6 +291,9 @@ class ShowCapture(wx.Frame):
                         M = cv2.getPerspectiveTransform(pts1,pts2)
                         dst = cv2.warpPerspective(frame,M,(tamanoFinal,tamanoFinal))
                         
+
+                        #Segunda transformada
+                        tamanoFinal2 = (self.tamanoMatriz + 4)*20
                         img = dst
                         gray2 = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
                         ret,thresh2 = cv2.threshold(gray2,155,255,1)
@@ -299,14 +314,19 @@ class ShowCapture(wx.Frame):
 
                         for p,cnt in enumerate(contours):
                             # Check if it is an external contour and its area is more than 100
+                            pixMin = 333.34
+                            pixMax = 383.34
+                            if self.numColores == 2:
+                                celdas = self.tamanoMatriz + 4 - (2*self.numColores)
+                            else:
+                                celdas = self.tamanoMatriz + 4 - self.numColores
 
-                            if hierarchy[0,p,3] == -1 and cv2.contourArea(cnt)>300:
+                            if hierarchy[0,p,3] == -1 and cv2.contourArea(cnt)>3000:
+                                print("Nuevo16-"+str(self.cont))
+                                print(cv2.contourArea(cnt))
                                 x,y,w,h = cv2.boundingRect(cnt)
-                                #cv2.rectangle(img,(x,y),(x+w,y+h),(0,0,255),2)
-                                
-                                #cv2.circle(img,(x,y), 2, (0,0,255), -1)
-                                #print(format(x)+'--'+format(y))
-                                #cv2.imshow('Segundo',img)
+                                cv2.rectangle(img,(x,y),(x+w,y+h),(0,0,255),2)
+
                                 if x<=e1x+8 and y<=e1y:
                                     e1x = x
                                     e1y = y
@@ -321,10 +341,10 @@ class ShowCapture(wx.Frame):
                         #cv2.imshow('Segundo',img)
 
                         pts1 = np.float32([[e1x,e1y],[e2x,e1y],[e1x,e2y],[e2x,e2y]])
-                        pts2 = np.float32([[0,0],[0,tamanoFinal],[tamanoFinal,0],[tamanoFinal,tamanoFinal]])
+                        pts2 = np.float32([[0,0],[0,tamanoFinal2],[tamanoFinal2,0],[tamanoFinal2,tamanoFinal2]])
                         M = cv2.getPerspectiveTransform(pts1,pts2)
-                        dst2 = cv2.warpPerspective(img,M,(tamanoFinal,tamanoFinal))
-
+                        #dst2 = cv2.warpPerspective(img,M,(tamanoFinal2,tamanoFinal2))
+                        dst2=img    
                         rows,cols = dst2.shape[:2]
 
                         M = cv2.getRotationMatrix2D((cols/2,rows/2),-90,1)
@@ -332,16 +352,16 @@ class ShowCapture(wx.Frame):
                         
 
                         nlineas = self.tamanoMatriz+3
-                        tcuadrado = round(tamanoFinal/(nlineas+1))
+                        tcuadrado = round(tamanoFinal2/(nlineas+1))
                         for x in range(nlineas):
                             #lineas verticales
                             pt1 = ((x+1)*tcuadrado,0)
-                            pt2 = ((x+1)*tcuadrado,tamanoFinal)
+                            pt2 = ((x+1)*tcuadrado,tamanoFinal2)
                             cv2.line(dst2,pt1,pt2,(0,255,0),1)
 
                             #lineas horizontales
                             pt1 = (0,(x+1)*tcuadrado)
-                            pt2 = (tamanoFinal,(x+1)*tcuadrado)
+                            pt2 = (tamanoFinal2,(x+1)*tcuadrado)
                             cv2.line(dst2,pt1,pt2,(0,255,0),1)
                         cv2.imshow("Transformacion2", dst2)
 
@@ -354,32 +374,32 @@ class ShowCapture(wx.Frame):
                         self.sincronizacionAnterior = celdaSincronizacion
                         
                         if comparar==1:
-                            print('sincronización igual')
+                            #print('sincronización igual')
                             if self.cont == 1:
                                  hilo2 = threading.Thread(target=self.leerFrames)
                                  hilo2.start()
                             cv2.imwrite("Nuevo16-"+str(self.cont)+".png", dst2)
-                            
                             self.cont = self.cont+1
 
                         else: 
-                            print('sincronización nuevo')
+                            #print('sincronización nuevo')
                             if self.cont == 1:
                                  hilo2 = threading.Thread(target=self.leerFrames)
                                  hilo2.start()
                             cv2.imwrite("Nuevo16-"+str(self.cont)+".png", dst2)
                             self.cont = self.cont+1
-                            #cv2.imwrite("ANterior16-"+str(i-1)+".png", dst)
 
                 #self.bmp.CopyFromBuffer(dst)
                 #self.ImgControl.SetBitmap(self.bmp)
 
 captura = cv2.VideoCapture(1)
 #captura = cv2.VideoCapture('http://192.168.1.72:4747/video')
+captura.set(cv2.CAP_PROP_SETTINGS, 1 )
 captura.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 captura.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 captura.set(cv2.CAP_PROP_FPS, 60)
 
+borrarImagenes()
 app = wx.App()
 frame = ShowCapture(captura,'Receptor')
 frame.Show()
