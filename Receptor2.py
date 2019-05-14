@@ -4,10 +4,13 @@ from tkinter import scrolledtext as st
 from tkinter import filedialog as fd
 from tkinter import messagebox as mb
 from time import sleep
+from time import time
+from threading import Lock
 from videocaptureasync import VideoCaptureAsync
 from PIL import Image, ImageTk
 from os import remove
 import threading,time
+import subprocess
 
 import cv2
 import tkinter as tkk
@@ -38,6 +41,12 @@ class Interfaz:
         self.datos = np.array([],dtype=int)
         self.frames = []
         self.cont = 0
+        self.numTramas = 0
+        self.tramasValidas = 0
+        self.tramasInvalidas = 0
+        self.tiempoInicial = 0
+        self.tiempoFinal = 0
+        self.tiempoTotal = 0
 
         #PATRONES POR SEGUNDO
         self.etiqueta = Label(text="FPS: ").place(relx=0.05,rely=0.15)
@@ -57,7 +66,7 @@ class Interfaz:
         self.numeroColores.place(relx=0.15,rely=0.25)
         self.numeroColores.current(0)
         
-        segundos = 45
+        segundos = 90
         self.borrarImagenes()
         self.hilo = threading.Thread(target=self.IniciarCaptura, 
                             args=(segundos,))
@@ -98,51 +107,84 @@ class Interfaz:
         return ''.join(chars)
 
     def leerTramas(self,dst2):
-        imagen = coloresReferencia(dst2,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
-        coloresR = imagen.obtenerColoresReferencia()
-        matriz = muestraDeColor(dst2,int(self.tamanoMatriz.get()),coloresR,int(self.numeroColores.get()))
-        bits = matriz.mapeoaBit()
-        trama = Trama(bits,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
-        
-        trama.obtenerCampos()
+        if self.numTramas == 0:
+            imagen = coloresReferencia(dst2,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
+            coloresR = imagen.obtenerColoresReferencia()
+            matriz = muestraDeColor(dst2,int(self.tamanoMatriz.get()),coloresR,int(self.numeroColores.get()))
+            bits = matriz.mapeoaBit()
+            trama = Trama(bits,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
+            trama.obtenerCampos()
 
-        if trama.tramaValida == True:
-            if not self.cargaUtil:
-                self.cargaUtil = np.ones((trama.numeroTramas,1),dtype=int)
-                self.cargaUtil = self.cargaUtil.tolist()
+            if trama.tramaValida == True:
+                self.numTramas = trama.numeroTramas
+                if not self.cargaUtil:
+                    self.cargaUtil = np.ones((trama.numeroTramas,1),dtype=int)
+                    self.cargaUtil = self.cargaUtil.tolist()
 
-            print("Trama: ",trama.numeroDeTrama," de ", trama.numeroTramas," tramas")
-            print("valida")
-
-            if trama.numeroDeTrama in self.tramasRecibidas:
-                print("La trama ya esta")
-            else:
                 self.tramasRecibidas = np.concatenate((self.tramasRecibidas,trama.numeroDeTrama),axis=None)
                 print("Tramas recibidas: ",self.tramasRecibidas)
                 self.cargaUtil[trama.numeroDeTrama-1] = trama.cargaUtil
-
-                if self.tramasRecibidas.shape[0] == trama.numeroTramas:
-                    for h in range(trama.numeroTramas):
-                        self.datos = np.concatenate((self.datos,self.cargaUtil[h]),axis=None)
-
-                    print("Se recibieron todas las tramas")
-                    print(self.datos)
-                    print(self.frombits(self.datos))
+                self.tramasValidas += 1
+                print("valida")
+            else:
+                self.tramasInvalidas += 1
+                print("trama invalida")
         else:
-            print("invalida")
+            imagen = coloresReferencia(dst2,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
+            coloresR = imagen.obtenerColoresReferencia()
+            matriz = muestraDeColor(dst2,int(self.tamanoMatriz.get()),coloresR,int(self.numeroColores.get()))
+            bits = matriz.indicadores()
+            trama = Trama(bits,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
+            trama.obtenerIndicadores()
+
+            if trama.numeroTramas == self.numTramas and trama.numeroDeTrama<=self.numTramas and trama.numeroDeTrama>0:
+                if trama.numeroDeTrama in self.tramasRecibidas:
+                    print("La trama ya esta")
+                else:
+                    bits = matriz.mapeoaBit()
+                    trama = Trama(bits,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
+                    trama.obtenerCampos()
+                    
+                    if trama.tramaValida == True:
+                        self.tramasRecibidas = np.concatenate((self.tramasRecibidas,trama.numeroDeTrama),axis=None)
+                        print("Tramas recibidas: ",self.tramasRecibidas)
+                        print("Tramas faltantes: ",self.numTramas - self.tramasRecibidas.shape[0])
+                        self.cargaUtil[trama.numeroDeTrama-1] = trama.cargaUtil
+                        self.tramasValidas +=1
+                        if self.tramasRecibidas.shape[0] == trama.numeroTramas:
+                            for h in range(trama.numeroTramas):
+                                self.datos = np.concatenate((self.datos,self.cargaUtil[h]),axis=None)
+                            print("Se recibieron todas las tramas")
+                            self.tiempoFinal = time.time()
+                            self.tiempoTotal = self.tiempoFinal - self.tiempoInicial
+                            print("Tramas validas: ", self.tramasValidas)
+                            print("Tramas invalidas: ",self.tramasInvalidas)
+                            print("Bits recibidos: ",self.datos.shape[0])
+                            print("Tiempo: ",self.tiempoTotal)
+                            mb.showinfo(message="Se recibieron todas las tramas", title="Título")
+                            file = open('texto.txt','a')
+                            file.write(self.frombits(self.datos))
+                            file.close()
+                            subprocess.run(["notepad","texto.txt"])
+                    else:
+                        self.tramasInvalidas += 1
+                        print("invalida")
         
     def leerFrames(self):
-        #img = cv2.imread('Nuevo16-0.png')
-        #c=1
-        #while img is not None:
-        img = cv2.imread('Nuevo16-'+str( threading.current_thread().getName())+'.png')
-        self.leerTramas(img)
-        print("Nuevo16-"+str( threading.current_thread().getName()))
-        print("******************************************")
-        #c = c+1
+        img = cv2.imread('Nuevo16-0.png')
+        c=1
+        while img is not None:
+            #img = cv2.imread('Nuevo16-'+str( threading.current_thread().getName())+'.png')
+            self.leerTramas(img)
+            img = cv2.imread('Nuevo16-'+str(c)+'.png')
+            print("Nuevo16-"+str(c-1))
+            #print("Nuevo16-"+str( threading.current_thread().getName()))
+            print("******************************************")
+            c = c+1
+        
 
     def IniciarCaptura(self,segundos):
-        
+        self.tiempoInicial = time.time()
         if self.patronesPorSegundo.get() == 30:
             self.cap = VideoCaptureAsync(0,1920,1080,30)
         else:
@@ -163,7 +205,9 @@ class Interfaz:
 
                         bilFilter = cv2.bilateralFilter(frame,9,75,75)
                         gray = cv2.cvtColor(bilFilter, cv2.COLOR_BGR2GRAY)
-                        cv2.imshow('gry',gray)
+                        with Lock(): 
+                            cv2.imshow('gry',gray)
+                            cv2.waitKey(25)
                         cv2.imwrite("NuevoGris.png", gray)
 
                         ret,thresh = cv2.threshold(gray,200,255,1)
@@ -267,16 +311,16 @@ class Interfaz:
                                 self.sincronizacionAnterior = celdaSincronizacion
                         
                                 #if comparar==1:
-                                print('sincronización igual')
-                                #if self.cont == 1:
-                                #    hilo2 = threading.Thread(target=self.leerFrames)
-                                #    hilo2.start()
+                                #print('sincronización igual')
+                                if self.cont == 1:
+                                    hilo2 = threading.Thread(target=self.leerFrames)
+                                    hilo2.start()
                                 cv2.imwrite("Nuevo16-"+str(self.cont)+".png", dst2)
-                                print("Nuevo16-"+str(self.cont))
+                                #print("Nuevo16-"+str(self.cont))
                                    
-                                hilo2 = threading.Thread(name='%s' %self.cont, 
-                                                        target=self.leerFrames)    
-                                hilo2.start()
+                                #hilo2 = threading.Thread(name='%s' %self.cont, 
+                                #                        target=self.leerFrames)    
+                                #hilo2.start()
                                 self.cont = self.cont+1
 
                                 #else: 
