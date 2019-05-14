@@ -40,38 +40,46 @@ class Interfaz:
         self.cont = 0
 
         #PATRONES POR SEGUNDO
-        self.etiqueta = Label(text="FPS: ").place(relx=0.1,rely=0.15)
+        self.etiqueta = Label(text="FPS: ").place(relx=0.05,rely=0.15)
         self.patronesPorSegundo = ttk.Combobox(state="readonly", values=[30,60])
-        self.patronesPorSegundo.place(relx=0.2,rely=0.15)
+        self.patronesPorSegundo.place(relx=0.15,rely=0.15)
         self.patronesPorSegundo.current(0)
 
         #TAMAÑO DE LA MATRIZ
-        self.etiqueta2 = Label(text="Tamaño de la matriz: ").place(relx=0.1,rely=0.2)
+        self.etiqueta2 = Label(text="Tamaño de la matriz: ").place(relx=0.05,rely=0.2)
         self.tamanoMatriz = ttk.Combobox(state="readonly", values=[8,10,12,14,16,100])
-        self.tamanoMatriz.place(relx=0.2,rely=0.2)
+        self.tamanoMatriz.place(relx=0.15,rely=0.2)
         self.tamanoMatriz.current(0)
         
         #NUMERO DE COLORES
-        self.etiqueta3 = Label(text="Número de colores").place(relx=0.1,rely=0.25)
+        self.etiqueta3 = Label(text="Número de colores").place(relx=0.05,rely=0.25)
         self.numeroColores = ttk.Combobox(state="readonly", values=[2,4,8])
-        self.numeroColores.place(relx=0.2,rely=0.25)
+        self.numeroColores.place(relx=0.15,rely=0.25)
         self.numeroColores.current(0)
         
-        segundos = 10
+        segundos = 45
         self.borrarImagenes()
         self.hilo = threading.Thread(target=self.IniciarCaptura, 
                             args=(segundos,))
 
-        self.transmitir = Button(self.Interfaz,text="Comenzar Captura",command=self.hilo.start).place(relx=0.1,rely=0.35)
-        self.transmitir = Button(self.Interfaz,text="Parar Captura",command=self.PararCaptura).place(relx=0.2,rely=0.35)
+        self.transmitir = Button(self.Interfaz,text="Comenzar Captura",command=self.hilo.start).place(relx=0.05,rely=0.35)
+        self.transmitir = Button(self.Interfaz,text="Parar Captura",command=self.PararCaptura).place(relx=0.15,rely=0.35)
         #self.scrolledtext1 = st.ScrolledText(self.Interfaz, width=30, height=20)
         #self.scrolledtext1.place(relx=0.1, rely=0.35)
         
 
         #PRUEBA DE IMAGEN EN LABEL
         self.l1 = tkk.Label(self.Interfaz, text="   ", borderwidth=4, relief="groove")
-        self.l1.place(relx=0.4,rely=0.005,width=500, height=500)
+        self.l1.place(relx=0.30,rely=0.005,width=300, height=300)
         
+        #TRAMAS
+        self.etiquetaR = Label(text="Tramas recibidas - de: ").place(relx=0.6,rely=0.15)
+
+        #FER
+        self.etiquetaF = Label(text="FER: ").place(relx=0.6,rely=0.25)
+        #BER
+        self.etiquetaB = Label(text="BER: ").place(relx=0.6,rely=0.35)
+
         self.Interfaz.mainloop()
 
     def borrarImagenes(self):
@@ -136,9 +144,9 @@ class Interfaz:
     def IniciarCaptura(self,segundos):
         
         if self.patronesPorSegundo.get() == 30:
-            self.cap = VideoCaptureAsync(1,1920,1080,30)
+            self.cap = VideoCaptureAsync(0,1920,1080,30)
         else:
-            self.cap = VideoCaptureAsync(1,1280,720,60)
+            self.cap = VideoCaptureAsync(0,1280,720,60)
         self.cap.start()
 
         contador = 0
@@ -152,11 +160,6 @@ class Interfaz:
                 try:
                     ret, frame = self.cap.read()
                     if ret:
-                        img = Image.fromarray(frame)
-                        imgtk = ImageTk.PhotoImage(image=img)
-                        self.l1.imgtk = imgtk
-                        self.l1.configure(image = imgtk)
-                        self.Interfaz.update()
 
                         bilFilter = cv2.bilateralFilter(frame,9,75,75)
                         gray = cv2.cvtColor(bilFilter, cv2.COLOR_BGR2GRAY)
@@ -164,7 +167,7 @@ class Interfaz:
                         cv2.imwrite("NuevoGris.png", gray)
 
                         ret,thresh = cv2.threshold(gray,200,255,1)
-                        contours,h = cv2.findContours(thresh,1,2)
+                        _,contours,h = cv2.findContours(thresh,1,2)
                         cv2.imshow('vhf',thresh)
                         cv2.imwrite("NuevoNegro.png", thresh)
 
@@ -188,13 +191,19 @@ class Interfaz:
                                 ret,thresh2 = cv2.threshold(gray2,155,255,1)
                                 cv2.imshow("GRIS",thresh2)
                                 cv2.imshow("gris2",gray2)
+
+                                imgScreen = Image.fromarray(dst)
+                                imgtk = ImageTk.PhotoImage(image=imgScreen)
+                                self.l1.imgtk = imgtk
+                                self.l1.configure(image = imgtk)
+                                self.Interfaz.update()
                                 
                                 # Remove some small noise if any.
                                 dilate = cv2.dilate(thresh2,None)
                                 erode = cv2.erode(dilate,None)
 
                                 # Find contours with cv2.RETR_CCOMP
-                                contours,hierarchy = cv2.findContours(erode,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
+                                _,contours,hierarchy = cv2.findContours(erode,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
                                 #cv2.drawContours(img,contours,-1,(255,0,255),3)
                         
                                 e1x = 300
