@@ -47,6 +47,7 @@ class Interfaz:
         self.tiempoInicial = 0
         self.tiempoFinal = 0
         self.tiempoTotal = 0
+        self.TramasFaltantes = 0
 
         #PATRONES POR SEGUNDO
         self.etiqueta = Label(text="FPS: ").place(relx=0.05,rely=0.15)
@@ -82,7 +83,13 @@ class Interfaz:
         self.l1.place(relx=0.30,rely=0.005,width=300, height=300)
         
         #TRAMAS
-        self.etiquetaR = Label(text="Tramas recibidas - de: ").place(relx=0.6,rely=0.15)
+        self.TR = StringVar()
+        self.TF = StringVar()
+        self.etiquetaR = Label(self.Interfaz,textvariable=self.TR).place(relx=0.6,rely=0.15)
+        self.etiquetaFa = Label(self.Interfaz,textvariable=self.TF).place(relx=0.6,rely=0.20)
+
+        self.TR.set("Tramas Recibidas: ")
+        self.TF.set("Tramas Faltantes: ")
 
         #FER
         self.etiquetaF = Label(text="FER: ").place(relx=0.6,rely=0.25)
@@ -148,9 +155,13 @@ class Interfaz:
                     if trama.tramaValida == True:
                         self.tramasRecibidas = np.concatenate((self.tramasRecibidas,trama.numeroDeTrama),axis=None)
                         print("Tramas recibidas: ",self.tramasRecibidas)
-                        print("Tramas faltantes: ",self.numTramas - self.tramasRecibidas.shape[0])
+                        self.TramasFaltantes=self.numTramas - self.tramasRecibidas.shape[0]
+                        print("Tramas faltantes: ",self.TramasFaltantes)
                         self.cargaUtil[trama.numeroDeTrama-1] = trama.cargaUtil
                         self.tramasValidas +=1
+                        self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
+                        self.TF.set("Tramas Faltantes: "+format(self.TramasFaltantes))
+                        self.Interfaz.update()
                         if self.tramasRecibidas.shape[0] == trama.numeroTramas:
                             for h in range(trama.numeroTramas):
                                 self.datos = np.concatenate((self.datos,self.cargaUtil[h]),axis=None)
@@ -186,9 +197,9 @@ class Interfaz:
     def IniciarCaptura(self,segundos):
         self.tiempoInicial = time.time()
         if self.patronesPorSegundo.get() == 30:
-            self.cap = VideoCaptureAsync(0,1920,1080,30)
+            self.cap = VideoCaptureAsync(1,1920,1080,30)
         else:
-            self.cap = VideoCaptureAsync(0,1280,720,60)
+            self.cap = VideoCaptureAsync(1,1280,720,60)
         self.cap.start()
 
         contador = 0
@@ -236,11 +247,6 @@ class Interfaz:
                                 cv2.imshow("GRIS",thresh2)
                                 cv2.imshow("gris2",gray2)
 
-                                imgScreen = Image.fromarray(dst)
-                                imgtk = ImageTk.PhotoImage(image=imgScreen)
-                                self.l1.imgtk = imgtk
-                                self.l1.configure(image = imgtk)
-                                self.Interfaz.update()
                                 
                                 # Remove some small noise if any.
                                 dilate = cv2.dilate(thresh2,None)
@@ -316,6 +322,10 @@ class Interfaz:
                                     hilo2 = threading.Thread(target=self.leerFrames)
                                     hilo2.start()
                                 cv2.imwrite("Nuevo16-"+str(self.cont)+".png", dst2)
+                                nombreImagen = 'Nuevo16-'+str(self.cont)+'.png'
+                                imgScreen = PhotoImage(file = nombreImagen)
+                                self.l1.configure(image = imgScreen)
+                                self.Interfaz.update()
                                 #print("Nuevo16-"+str(self.cont))
                                    
                                 #hilo2 = threading.Thread(name='%s' %self.cont, 
@@ -338,7 +348,8 @@ class Interfaz:
 
     
     def PararCaptura(self):
-        #self.hilo.join()
+        self.hilo.join()
+        self.hilo.join()
         #cv2.destroyAllWindows()
         self.cap.stop()
         self.cap.exit()
