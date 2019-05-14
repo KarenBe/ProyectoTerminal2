@@ -6,29 +6,27 @@ import crc16
 from rotarImagen import rotarImagen
 
 tamCelda = 20
-tamMatriz = 8
-numColores = 4
+tamMatriz = 16
+numColores = 8
 
-image = cv2.imread('Nuevo16-1.png')
+image = cv2.imread('Nuevo16.png')
 
-r = rotarImagen(image,tamMatriz,numColores)
+#r = rotarImagen(image,tamMatriz,numColores)
+#cv2.imshow("original",image)
+#cv2.imshow("rotada",r.rotar())
+#cv2.waitKey(0)
+#cv2.destroyAllWindows()
 
-cv2.imshow("original",image)
-cv2.imshow("rotada",r.rotar())
+imagen = coloresReferencia(image,tamMatriz,numColores)
+coloresR = imagen.obtenerColoresReferencia()
 
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+matriz = muestraDeColor(image,tamMatriz,coloresR,numColores)
 
+bits = matriz.indicadores()
+trama = Trama(bits,tamMatriz,numColores)
+trama.obtenerIndicadores()
 
-
-#imagen = coloresReferencia(image,tamMatriz,numColores)
-
-#coloresR = imagen.obtenerColoresReferencia()
-#matriz = muestraDeColor(image,tamMatriz,coloresR,numColores)
-#bits = matriz.mapeoaBit()
-#trama = Trama(bits,tamMatriz,numColores)
-
-#trama.obtenerCampos()
+#print(trama.numeroDeTrama)
 
 #if trama.tramaValida == True:
 #    print("valida")
