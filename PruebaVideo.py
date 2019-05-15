@@ -6,11 +6,11 @@ import time
 if __name__ == '__main__' :
 
     # Start default camera
-    video = cv2.VideoCapture(1);
-
+    
+    video = cv2.VideoCapture(1)
+    #video.set(cv2.CAP_PROP_AUTOFOCUS, 0)
     # Find OpenCV version
     (major_ver, minor_ver, subminor_ver) = (cv2.__version__).split('.')
-
 
     # With webcam get(CV_CAP_PROP_FPS) does not work.
     # Let's see for ourselves.
@@ -24,12 +24,12 @@ if __name__ == '__main__' :
         ancho = video.get(cv2.CAP_PROP_FRAME_HEIGHT)
         print( "Frames per second using video.get(cv2.CAP_PROP_FPS) : {0}"+format(fps)+' altura: '+format(altura)+ 'ancho: '+format(ancho))
 
-        video.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'XVID'))
-        video.set(cv2.CAP_PROP_FRAME_WIDTH, 1280);
-        video.set(cv2.CAP_PROP_FRAME_HEIGHT, 720);
-        video.set(cv2.CAP_PROP_FPS, 60)
-        fps = video.get(cv2.CAP_PROP_FPS)
-        print( "Frames per second using video.get(cv2.CAP_PROP_FPS) : {0}"+format(fps))
+        #video.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'XVID'))
+        #video.set(cv2.CAP_PROP_FRAME_WIDTH, 1280);
+        #video.set(cv2.CAP_PROP_FRAME_HEIGHT, 720);
+        #fps = video.get(cv2.CAP_PROP_FPS)
+        #print( "Frames per second using video.get(cv2.CAP_PROP_FPS) : {0}"+format(fps))
+        print("x")
 
     # Number of frames to capture
     num_frames = 30;
@@ -39,17 +39,19 @@ if __name__ == '__main__' :
 
     # Start time
     start = time.time()
-    tiempo=10
+    tiempo=5
     tiempoF=start+tiempo
     # Grab a few frames
-    
+    print("Inicio")
     #for i in range(0, num_frames) :
+    c=0
     while(start<tiempoF):
         ret, frame = video.read()
-        cv2.imwrite("Nuevo16-"+str(start)+".png", frame)
+        cv2.imwrite("Nuevo16-"+str(c)+".png", frame)
         start=time.time()
+        c+=1
 
-
+    print("Frames: ",c)
     # End time
     end = time.time()
 
