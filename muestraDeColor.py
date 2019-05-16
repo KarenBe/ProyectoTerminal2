@@ -32,7 +32,7 @@ class muestraDeColor:
         for f in range(self.tamanoMatriz):
             for c in range(self.tamanoMatriz):
                 x = x+1
-                if x == indice+2:
+                if x == indice+3:
                     return arregloColores
 
                 celda = matriz[f*self.tamCelda:(f+1)*self.tamCelda , c*self.tamCelda:(c+1)*self.tamCelda]
@@ -111,13 +111,14 @@ class muestraDeColor:
 
         arregloBits = np.zeros((),dtype = np.uint8)
         arregloColores = self.numTramas()
+        #print("arreglo colores: ", arregloColores)
         
         if self.numColores == 2:
             a = np.array([1])
             arregloBits = np.concatenate((a,arregloColores), axis=None)
 
         elif self.numColores == 4:
-            for x in range((indice)):
+            for x in range(indice):
                 if arregloColores[x] == 1:
                     a = np.array([0,0],dtype=np.uint8)
                     arregloBits = np.concatenate((arregloBits,a),axis=None)
@@ -164,7 +165,7 @@ class muestraDeColor:
         indice = int(math.log(self.numColores,2))
         arregloBits = np.zeros((),dtype = np.uint8)
         arregloColores = self.celda()
-
+        #print("arreglo colores: ",arregloColores)
         if self.numColores == 2:
             a = np.array([1])
             arregloBits = np.concatenate((a,arregloColores), axis=None)

@@ -19,8 +19,8 @@ class Trama:
     def obtenerIndicadores(self):
         self.numeroTramas = int(''.join(map(str,  self.arregloBits[0:8]                     )),2)
         self.numeroDeTrama = int(''.join(map(str, self.arregloBits[8:16]                    )),2)
-        #print("numero de tramas: ", self.numeroTramas)
-        #print("numero de trama: ",  self.numeroDeTrama)
+        #print("numero de tramas: ", self.arregloBits[0:8])
+        #print("numero de trama: ",  self.arregloBits[8:16])
 
     def obtenerCampos(self):
         BitsPorTrama = int((((self.tamanoMatriz*self.tamanoMatriz)-3)*math.log2(self.numColores))-32)        
@@ -41,6 +41,9 @@ class Trama:
         
         print("numero de tramas: ", self.numeroTramas)
         print("numero de trama: ",  self.numeroDeTrama)
+        #print("numero de tramas: ", self.arregloBits[0:8])
+        #print("numero de trama: ",  self.arregloBits[8:16])
+
         #print("longitud CU: ",      self.longitudCU)
         #print("Carga útil: ",       self.cargaUtil,type(self.cargaUtil), type(self.cargaUtil[2]))
         #print("Texto recuperado: ", self.frombits(self.cargaUtil))
