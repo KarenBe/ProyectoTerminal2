@@ -128,20 +128,19 @@ class Interfaz:
 
         #Verificar si la primera trama valida fue recibida
         if self.numTramas == 0:
-            print("No se ha recibido primera trama correcta")
             #Calculo de los colores referencia, obtencion de los bits y campos de la trama
             imagen = coloresReferencia(dst2,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
             coloresR = imagen.obtenerColoresReferencia()
             matriz = muestraDeColor(dst2,int(self.tamanoMatriz.get()),coloresR,int(self.numeroColores.get()))
             bits = matriz.mapeoaBit()
             trama = Trama(bits,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
-            print("aqui")
             trama.obtenerCampos()
             #si la trama es valida, alamcena el número total de tramas e incrementa las tramas validas en 1
             if trama.tramaValida == True:
                 print("primera trama recibida correctamente: ",c)
                 self.numTramas = trama.numeroTramas
                 self.tramaAnterior = trama.numeroDeTrama
+                print("Trama anterior: ",self.tramaAnterior)
                 if not self.cargaUtil:
                     self.cargaUtil = np.ones((trama.numeroTramas,1),dtype=int)
                     self.cargaUtil = self.cargaUtil.tolist()
@@ -163,6 +162,8 @@ class Interfaz:
             trama = Trama(bits,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
             trama.obtenerIndicadores()
             #Si el número de trama es igual al anterior, descarta la trama
+            print("Trama anterior: ",self.tramaAnterior)
+            print("Trama actual: ",trama.numeroDeTrama)
             if self.tramaAnterior == trama.numeroDeTrama:
                 print("igual a la anterior")
                 print("numero de tramas: ", trama.numeroTramas)
