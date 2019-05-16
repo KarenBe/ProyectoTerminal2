@@ -24,6 +24,7 @@ from SincronizacionCelda import Sincronizacion
 from muestraDeColor import muestraDeColor
 from Trama import Trama
 from rotarImagen import rotarImagen
+from TramasBER import TramaBER
 global tramaGuardada
 tramaGuardada = 0
 
@@ -127,6 +128,7 @@ class Interfaz:
     def leerTramas(self,dst2,c):
 
         #Verificar si la primera trama valida fue recibida
+        cv2.imshow("Imagen trama",dst2)
         if self.numTramas == 0:
             print("No se ha recibido primera trama correcta")
             #Calculo de los colores referencia, obtencion de los bits y campos de la trama
@@ -150,6 +152,8 @@ class Interfaz:
                 self.cargaUtil[trama.numeroDeTrama-1] = trama.cargaUtil
                 self.tramasValidas += 1
                 print("valida")
+                TramasTransmitidas=TramaBER(self.numTramas,self.cargaUtil.length,self.numeroColores,self.tamanoMatriz)
+                
             #Si no es valida, incrementa el valor de las tramas invalidas en 1
             else:
                 self.tramasInvalidas += 1
@@ -227,13 +231,13 @@ class Interfaz:
             bilFilter = cv2.bilateralFilter(frame,9,75,75)
             gray = cv2.cvtColor(bilFilter, cv2.COLOR_BGR2GRAY)
             with Lock(): 
-                cv2.imshow('gry',gray)
+                #cv2.imshow('gry',gray)
                 cv2.waitKey(25)
             cv2.imwrite("NuevoGris.png", gray)
 
             ret,thresh = cv2.threshold(gray,200,255,1)
-            contours,h = cv2.findContours(thresh,1,2)
-            cv2.imshow('vhf',thresh)
+            _,contours,h = cv2.findContours(thresh,1,2)
+            #cv2.imshow('vhf',thresh)
             cv2.imwrite("NuevoNegro.png", thresh)
 
             for i,cnt in enumerate(contours):
@@ -252,15 +256,15 @@ class Interfaz:
                     img = dst
                     gray2 = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
                     ret,thresh2 = cv2.threshold(gray2,155,255,1)
-                    cv2.imshow("GRIS",thresh2)
-                    cv2.imshow("gris2",gray2)
+                    #cv2.imshow("GRIS",thresh2)
+                    #cv2.imshow("gris2",gray2)
 
                     # Remove some small noise if any.
                     dilate = cv2.dilate(thresh2,None)
                     erode = cv2.erode(dilate,None)
 
                     # Find contours with cv2.RETR_CCOMP
-                    contours,hierarchy = cv2.findContours(erode,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
+                    _,contours,hierarchy = cv2.findContours(erode,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
                     #cv2.drawContours(img,contours,-1,(255,0,255),3)
             
                     e1x = 300
@@ -312,7 +316,7 @@ class Interfaz:
                         pt2 = (tamanoFinal,(x+1)*tcuadrado)
                         cv2.line(dst2,pt1,pt2,(0,255,0),1)
 
-                    cv2.imshow("Transformacion2", dst2)
+                    #cv2.imshow("Transformacion2", dst2)
 
                     coloresR = coloresReferencia(dst2,self.tamanoMatriz.get(),self.numeroColores.get())
                     #print(coloresR.obtenerColoresReferencia())
@@ -354,9 +358,9 @@ class Interfaz:
 
         self.tiempoInicial = time.time()
         if self.patronesPorSegundo.get() == 30:
-            self.cap = VideoCaptureAsync(1,1920,1080,30)
+            self.cap = VideoCaptureAsync("http://192.168.1.70:4747/video",1920,1080,30)
         else:
-            self.cap = VideoCaptureAsync(1,1280,720,60)
+            self.cap = VideoCaptureAsync("http://192.168.1.70:4747/video",1280,720,60)
         self.cap.start()
 
         contador = 0
@@ -413,7 +417,7 @@ class Interfaz:
                         cv2.imwrite("NuevoGris.png", gray)
 
                         ret,thresh = cv2.threshold(gray,200,255,1)
-                        contours,h = cv2.findContours(thresh,1,2)
+                        _,contours,h = cv2.findContours(thresh,1,2)
                         cv2.imshow('vhf',thresh)
                         cv2.imwrite("NuevoNegro.png", thresh)
 
@@ -444,7 +448,7 @@ class Interfaz:
                                 erode = cv2.erode(dilate,None)
 
                                 # Find contours with cv2.RETR_CCOMP
-                                contours,hierarchy = cv2.findContours(erode,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
+                                _,contours,hierarchy = cv2.findContours(erode,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
                                 #cv2.drawContours(img,contours,-1,(255,0,255),3)
                         
                                 e1x = 300
