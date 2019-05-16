@@ -1,7 +1,7 @@
 import math
 from EstructuraTrama import EstructuraTrama
-from PatronDeColor import PatronDeColor
-from Imagen3 import Imagen
+#from PatronDeColor import PatronDeColor
+#from Imagen3 import Imagen
 
 
 class TramaBER:

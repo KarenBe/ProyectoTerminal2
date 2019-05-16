@@ -33,7 +33,7 @@ class Interfaz:
     def __init__(self):
         self.Interfaz = Tk()
         self.Interfaz.state('zoomed')
-        self.Interfaz.configure(bg='#636363')
+        self.Interfaz.configure(bg='#F1F1F1')
         self.cap = None
         self.hilo2 = None
         self.sincronizacionAnterior=[[255,255,255],[255,255,255],[255,255,255]]
@@ -50,6 +50,8 @@ class Interfaz:
         self.tiempoTotal = 0
         self.TramasFaltantes = 0
         self.tramaAnterior = 0
+        self.FER = 0
+        self.FPS = 0
         #PATRONES POR SEGUNDO
         self.etiqueta = Label(text="FPS: ").place(relx=0.05,rely=0.15)
         self.patronesPorSegundo = ttk.Combobox(state="readonly", values=[30,60])
@@ -94,14 +96,21 @@ class Interfaz:
         self.TF = StringVar()
         self.etiquetaR = Label(self.Interfaz,textvariable=self.TR).place(relx=0.6,rely=0.15)
         self.etiquetaFa = Label(self.Interfaz,textvariable=self.TF).place(relx=0.6,rely=0.20)
-
         self.TR.set("Tramas Recibidas: ")
         self.TF.set("Tramas Faltantes: ")
-
+        
+        #FPS
+        self.TFPS = StringVar()
+        self.etiquetaFPS = Label(self.Interfaz,textvariable=self.TFPS).place(relx=0.05,rely=0.4)
+        self.TFPS.set("FPS: ")
         #FER
-        self.etiquetaF = Label(text="FER: ").place(relx=0.6,rely=0.25)
+        self.TFER = StringVar()
+        self.etiquetaF = Label(self.Interfaz,textvariable=self.TFER).place(relx=0.6,rely=0.25)
+        self.TFER.set("FER: ")
         #BER
-        self.etiquetaB = Label(text="BER: ").place(relx=0.6,rely=0.35)
+        self.TBER = StringVar()
+        self.etiquetaB = Label(self.Interfaz,textvariable=self.TBER).place(relx=0.6,rely=0.35)
+        self.TBER.set("BER: ")
 
         self.Interfaz.mainloop()
 
@@ -124,20 +133,22 @@ class Interfaz:
             byte = bits[b*8:(b+1)*8]
             chars.append(chr(int(''.join([str(bit) for bit in byte]), 2)))
         return ''.join(chars)
+            
 
     def leerTramas(self,dst2,c):
-
         #Verificar si la primera trama valida fue recibida
-        cv2.imshow("Imagen trama",dst2)
         if self.numTramas == 0:
+            print("Primera trama: ",c)
             #Calculo de los colores referencia, obtencion de los bits y campos de la trama
             imagen = coloresReferencia(dst2,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
             coloresR = imagen.obtenerColoresReferencia()
+            print("Muestra de color")
             matriz = muestraDeColor(dst2,int(self.tamanoMatriz.get()),coloresR,int(self.numeroColores.get()))
+            print("Mapeo a bit")
             bits = matriz.mapeoaBit()
             trama = Trama(bits,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
             trama.obtenerCampos()
-            #si la trama es valida, alamcena el número total de tramas e incrementa las tramas validas en 1
+            #si la trama es valida, almacena el número total de tramas e incrementa las tramas validas en 1
             if trama.tramaValida == True:
                 print("primera trama recibida correctamente: ",c)
                 self.numTramas = trama.numeroTramas
@@ -151,7 +162,7 @@ class Interfaz:
                 self.cargaUtil[trama.numeroDeTrama-1] = trama.cargaUtil
                 self.tramasValidas += 1
                 print("valida")
-                TramasTransmitidas=TramaBER(self.numTramas,self.cargaUtil.length,self.numeroColores,self.tamanoMatriz)
+                #TramasTransmitidas=TramaBER(self.numTramas,self.cargaUtil.length,self.numeroColores,self.tamanoMatriz)
                 
             #Si no es valida, incrementa el valor de las tramas invalidas en 1
             else:
@@ -229,6 +240,26 @@ class Interfaz:
         while frame is not None:
             print("******************************************")
             print("Procesando: Nuevo16-"+str(c))
+            dst2 = self.transformacionPerspectiva(frame,c)
+            nombreImagen = 'Nuevo_16-'+str(c)+'.png'
+            imgl = Image.open(nombreImagen)
+            imgl.thumbnail((300,300), Image.ANTIALIAS)
+            imgScreen = ImageTk.PhotoImage(imgl)
+            self.l1.configure(image = imgScreen)
+            self.Interfaz.update()
+            self.leerTramas(dst2,c)
+            c = c+1
+            frame = cv2.imread('Nuevo16-'+str(c)+'.png')
+
+        print("Tramas validas: ",self.tramasValidas)
+        print("Tramas invalidas: ",self.tramasInvalidas)
+        print("Tramas totales: ", self.tramasInvalidas + self.tramasValidas)
+
+        self.FER = self.tramasInvalidas/(self.tramasInvalidas + self.tramasValidas)
+        self.TFER.set("FER: " + format(self.FER))
+
+    
+    def transformacionPerspectiva(self,frame,c):
             bilFilter = cv2.bilateralFilter(frame,9,75,75)
             gray = cv2.cvtColor(bilFilter, cv2.COLOR_BGR2GRAY)
             with Lock(): 
@@ -237,7 +268,7 @@ class Interfaz:
             cv2.imwrite("NuevoGris.png", gray)
 
             ret,thresh = cv2.threshold(gray,200,255,1)
-            _,contours,h = cv2.findContours(thresh,1,2)
+            contours,h = cv2.findContours(thresh,1,2)
             #cv2.imshow('vhf',thresh)
             cv2.imwrite("NuevoNegro.png", thresh)
 
@@ -246,8 +277,9 @@ class Interfaz:
                 area = cv2.contourArea(cnt)
                 auxT=int(self.tamanoMatriz.get())+4
                 tamanoFinal = auxT*20
-
-                if len(approx)==4 and area > 9000 and area<270000:
+                
+                #if len(approx)==4 and area > 9000 and area<270000:
+                if len(approx)==4 and area > 20000 and area<270000:
                     approx1=[approx[0],approx[1],approx[3],approx[2]]
                     pts1 = np.float32(approx1)
                     pts2 = np.float32([[0,0],[0,tamanoFinal],[tamanoFinal,0],[tamanoFinal,tamanoFinal]])
@@ -265,7 +297,7 @@ class Interfaz:
                     erode = cv2.erode(dilate,None)
 
                     # Find contours with cv2.RETR_CCOMP
-                    _,contours,hierarchy = cv2.findContours(erode,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
+                    contours,hierarchy = cv2.findContours(erode,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
                     #cv2.drawContours(img,contours,-1,(255,0,255),3)
             
                     e1x = 300
@@ -285,20 +317,16 @@ class Interfaz:
                                 e1x = x
                                 e1y = y
                                 #print(format(x)+'-2-'+format(y))
-                        
                             if x+w>e2x and y+h>e2y:
                                 e2x = x+w
                                 e2y = y+h
                                 cv2.circle(img,(x+w,y+h), 2, (0,255,0), -1)
-
                     #cv2.rectangle(img,(e1x,e1y),(e2x,e2y),(0,255,0),2)
                     #cv2.imshow('Segundo',img)
-
                     pts1 = np.float32([[e1x,e1y],[e2x,e1y],[e1x,e2y],[e2x,e2y]])
                     pts2 = np.float32([[0,0],[0,tamanoFinal],[tamanoFinal,0],[tamanoFinal,tamanoFinal]])
                     M = cv2.getPerspectiveTransform(pts1,pts2)
                     dst2 = cv2.warpPerspective(img,M,(tamanoFinal,tamanoFinal))
-
                     rows,cols = dst2.shape[:2]
 
                     r = rotarImagen(dst2,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
@@ -318,40 +346,50 @@ class Interfaz:
                         cv2.line(dst2,pt1,pt2,(0,255,0),1)
 
                     #cv2.imshow("Transformacion2", dst2)
-
-                    coloresR = coloresReferencia(dst2,self.tamanoMatriz.get(),self.numeroColores.get())
+                    #coloresR = coloresReferencia(dst2,self.tamanoMatriz.get(),self.numeroColores.get())
                     #print(coloresR.obtenerColoresReferencia())
-                    sincronizacion=CeldaSincronizacion(self.tamanoMatriz.get())
-                    celdaSincronizacion=sincronizacion.LeerCeldas(dst2)
-                    FuncionSincronizacion=Sincronizacion(celdaSincronizacion,self.sincronizacionAnterior)
-                    comparar=FuncionSincronizacion.CompararCeldas()
-                    self.sincronizacionAnterior = celdaSincronizacion
-            
+                    #sincronizacion=CeldaSincronizacion(self.tamanoMatriz.get())
+                    #celdaSincronizacion=sincronizacion.LeerCeldas(dst2)
+                    #FuncionSincronizacion=Sincronizacion(celdaSincronizacion,self.sincronizacionAnterior)
+                    #comparar=FuncionSincronizacion.CompararCeldas()
+                    #self.sincronizacionAnterior = celdaSincronizacion
                     #if comparar==1:
                     #    print('sincronización igual')
                     #else:
                     #print('sincronización nuevo')
-                    self.leerTramas(dst2,c)
                     cv2.imwrite("Nuevo_16-"+str(c)+".png", dst2)
-                    nombreImagen = 'Nuevo_16-'+str(c)+'.png'
-                    imgl = Image.open(nombreImagen)
-                    imgl.thumbnail((300,300), Image.ANTIALIAS)
-                    imgScreen = ImageTk.PhotoImage(imgl)
-                    self.l1.configure(image = imgScreen)
-                    self.Interfaz.update()
-            c = c+1
-            frame = cv2.imread('Nuevo16-'+str(c)+'.png')
-        print("Tramas validas: ",self.tramasValidas)
-        print("Tramas invalidas: ",self.tramasInvalidas)
-        print("Tramas totales: ", self.tramasInvalidas + self.tramasValidas)
-
+            return dst2
+        
     def IniciarProcesamiento(self):
-
         self.hilo = threading.Thread(target=self.IniciarCaptura2, 
                             args=(int(self.segundos.get()),))
         self.hilo.start()
     
-    def IniciarCaptura2(self,segundos):  
+    def IniciarCaptura2(self,segundos):
+
+        self.cap = None
+        self.hilo2 = None
+        self.sincronizacionAnterior=[[255,255,255],[255,255,255],[255,255,255]]
+        self.tramasRecibidas = np.array([],dtype=int)
+        self.cargaUtil = []
+        self.datos = np.array([],dtype=int)
+        self.frames = []
+        self.cont = 0
+        self.numTramas = 0
+        self.tramasValidas = 0
+        self.tramasInvalidas = 0
+        self.tiempoInicial = 0
+        self.tiempoFinal = 0
+        self.tiempoTotal = 0
+        self.TramasFaltantes = 0
+        self.tramaAnterior = 0
+        self.TBER.set("BER: ")
+        self.TFER.set("FER: ")
+        self.TFPS.set("FPS: ")
+        self.TR.set("Tramas Recibidas: ")
+        self.TF.set("Tramas Faltantes: ")
+
+        self.borrarImagenes()
         top = Toplevel()
         top.title("Información")
         msg = Message(top,width=300,text="                     Iniciando camara...                  ")
@@ -359,9 +397,9 @@ class Interfaz:
 
         self.tiempoInicial = time.time()
         if self.patronesPorSegundo.get() == 30:
-            self.cap = VideoCaptureAsync("http://192.168.1.70:4747/video",1920,1080,30)
+            self.cap = VideoCaptureAsync(1,1920,1080,30)
         else:
-            self.cap = VideoCaptureAsync("http://192.168.1.70:4747/video",1280,720,60)
+            self.cap = VideoCaptureAsync(1,1280,720,60)
         self.cap.start()
 
         contador = 0
@@ -386,6 +424,8 @@ class Interfaz:
                     #pass
                     exit()
             break
+        self.FPS = contador/segundos
+        self.TFPS.set("FPS: "+format(self.FPS))
         top.destroy()
         hilo2 = threading.Thread(target=self.leerFrames)
         hilo2.start()          
@@ -418,7 +458,7 @@ class Interfaz:
                         cv2.imwrite("NuevoGris.png", gray)
 
                         ret,thresh = cv2.threshold(gray,200,255,1)
-                        _,contours,h = cv2.findContours(thresh,1,2)
+                        contours,h = cv2.findContours(thresh,1,2)
                         cv2.imshow('vhf',thresh)
                         cv2.imwrite("NuevoNegro.png", thresh)
 
@@ -449,7 +489,7 @@ class Interfaz:
                                 erode = cv2.erode(dilate,None)
 
                                 # Find contours with cv2.RETR_CCOMP
-                                _,contours,hierarchy = cv2.findContours(erode,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
+                                contours,hierarchy = cv2.findContours(erode,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
                                 #cv2.drawContours(img,contours,-1,(255,0,255),3)
                         
                                 e1x = 300
