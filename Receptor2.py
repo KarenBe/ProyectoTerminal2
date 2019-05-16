@@ -151,8 +151,8 @@ class Interfaz:
                 self.cargaUtil[trama.numeroDeTrama-1] = trama.cargaUtil
                 self.tramasValidas += 1
                 print("valida")
-                TramasTransmitidas=TramaBER(self.numTramas,self.cargaUtil.length,self.numeroColores,self.tamanoMatriz)
-                
+                TramasTransmitidas=TramaBER(self.numTramas,int(self.numeroColores.get()),int(self.tamanoMatriz.get()))
+                TramasTransmitidas.generarTramas()
             #Si no es valida, incrementa el valor de las tramas invalidas en 1
             else:
                 self.tramasInvalidas += 1
