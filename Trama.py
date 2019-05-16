@@ -19,8 +19,8 @@ class Trama:
     def obtenerIndicadores(self):
         self.numeroTramas = int(''.join(map(str,  self.arregloBits[0:8]                     )),2)
         self.numeroDeTrama = int(''.join(map(str, self.arregloBits[8:16]                    )),2)
-        #print("numero de tramas: ", self.arregloBits[0:8])
-        #print("numero de trama: ",  self.arregloBits[8:16])
+        #print("indicadores: numero de tramas: ", self.arregloBits[0:8])
+        #print("indicadores: numero de trama: ",  self.arregloBits[8:16])
 
     def obtenerCampos(self):
         BitsPorTrama = int((((self.tamanoMatriz*self.tamanoMatriz)-3)*math.log2(self.numColores))-32)        
