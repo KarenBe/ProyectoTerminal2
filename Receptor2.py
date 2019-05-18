@@ -308,6 +308,7 @@ class Interfaz:
             c = c+1
             frame = cv2.imread('Nuevo16-'+str(c)+'.png')
 
+
         print("Tramas validas: ",self.tramasValidas)
         print("Tramas invalidas: ",self.tramasInvalidas)
         print("Tramas totales: ", self.tramasInvalidas + self.tramasValidas)
