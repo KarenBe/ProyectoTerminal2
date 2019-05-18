@@ -24,7 +24,7 @@ class EstructuraTrama:
             f.write('Relleno: ' + str(self.bitsRelleno) + '\n')
             f.write('CRC: ' + str(crc16.crc16xmodem(self.cargaUtil)) + str(self.CRC) + str(type(self.CRC)) + str(self.CRC.dtype)+'\n\n')
             f.close()
-            print("abierto")
+            #print("abierto")
         def aBinario(self,numero,nbits):
             nb = '{0:0'+str(nbits)+'b}'
             nb = nb.format(numero)

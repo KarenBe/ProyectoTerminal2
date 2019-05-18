@@ -28,6 +28,7 @@ from TramasBER import TramaBER
 global tramaGuardada
 tramaGuardada = 0
 
+print(cv2.__version__)
 
 class Interfaz:
     def __init__(self):
@@ -50,8 +51,11 @@ class Interfaz:
         self.tiempoTotal = 0
         self.TramasFaltantes = 0
         self.tramaAnterior = 0
+        self.tramasBitsErroneos = 0
         self.FER = 0
+        self.BER = 0
         self.FPS = 0
+        self.TramasTransmitidas = 0
         #PATRONES POR SEGUNDO
         self.etiqueta = Label(text="FPS: ").place(relx=0.05,rely=0.15)
         self.patronesPorSegundo = ttk.Combobox(state="readonly", values=[30,60])
@@ -72,7 +76,7 @@ class Interfaz:
 
         #SEGUNDOS
         self.etiqueta3 = Label(text="Segundos capturados").place(relx=0.05,rely=0.3)
-        self.segundos = ttk.Combobox(state="readonly", values=[1,2,3,4,5,6,7,8,9,10])
+        self.segundos = ttk.Combobox(state="readonly", values=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,18,19,20])
         self.segundos.place(relx=0.15,rely=0.3)
         self.segundos.current(0)
 
@@ -162,8 +166,8 @@ class Interfaz:
                 self.cargaUtil[trama.numeroDeTrama-1] = trama.cargaUtil
                 self.tramasValidas += 1
                 print("valida")
-                TramasTransmitidas=TramaBER(self.numTramas,int(self.numeroColores.get()),int(self.tamanoMatriz.get()))
-                TramasTransmitidas.generarTramas()
+                self.TramasTransmitidas=TramaBER(self.numTramas,int(self.numeroColores.get()),int(self.tamanoMatriz.get()))
+                self.TramasTransmitidas.generarTramas()
             #Si no es valida, incrementa el valor de las tramas invalidas en 1
             else:
                 self.tramasInvalidas += 1
@@ -204,6 +208,9 @@ class Interfaz:
                         bits = matriz.mapeoaBit()
                         trama = Trama(bits,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
                         trama.obtenerCampos()
+                        self.BER=self.BER+self.TramasTransmitidas.compararTrama(trama.numeroDeTrama,bits)
+                        print("BER Acumulado: ",self.BER)
+                        self.tramasBitsErroneos +=1
                         
                         if trama.tramaValida == True:
                             self.tramasValidas +=1
@@ -257,7 +264,9 @@ class Interfaz:
 
         self.FER = self.tramasInvalidas/(self.tramasInvalidas + self.tramasValidas)
         self.TFER.set("FER: " + format(self.FER))
-
+        promedioBER = self.BER / self.tramasBitsErroneos
+        self.TBER.set("BER: "+format(promedioBER))
+        print("BER promedio: ",promedioBER)
     
     def transformacionPerspectiva(self,frame,c):
             bilFilter = cv2.bilateralFilter(frame,9,75,75)
@@ -279,7 +288,7 @@ class Interfaz:
                 tamanoFinal = auxT*20
                 
                 #if len(approx)==4 and area > 9000 and area<270000:
-                if len(approx)==4 and area > 20000 and area<270000:
+                if len(approx)==4 and area > 4000 and area<270000:
                     approx1=[approx[0],approx[1],approx[3],approx[2]]
                     pts1 = np.float32(approx1)
                     pts2 = np.float32([[0,0],[0,tamanoFinal],[tamanoFinal,0],[tamanoFinal,tamanoFinal]])
@@ -358,7 +367,7 @@ class Interfaz:
                     #else:
                     #print('sincronización nuevo')
                     cv2.imwrite("Nuevo_16-"+str(c)+".png", dst2)
-            return dst2
+                    return dst2
         
     def IniciarProcesamiento(self):
         self.hilo = threading.Thread(target=self.IniciarCaptura2, 
@@ -397,9 +406,9 @@ class Interfaz:
 
         self.tiempoInicial = time.time()
         if self.patronesPorSegundo.get() == 30:
-            self.cap = VideoCaptureAsync(1,1920,1080,30)
+            self.cap = VideoCaptureAsync('http://192.168.1.68:4747/video',1920,1080,30)
         else:
-            self.cap = VideoCaptureAsync(1,1280,720,60)
+            self.cap = VideoCaptureAsync('http://192.168.1.68:4747/video',1280,720,60)
         self.cap.start()
 
         contador = 0
@@ -433,9 +442,9 @@ class Interfaz:
     def IniciarCaptura(self,segundos):
         self.tiempoInicial = time.time()
         if self.patronesPorSegundo.get() == 30:
-            self.cap = VideoCaptureAsync(1,1920,1080,30)
+            self.cap = VideoCaptureAsync('http://192.168.1.68:4747/video',1920,1080,30)
         else:
-            self.cap = VideoCaptureAsync(1,1280,720,60)
+            self.cap = VideoCaptureAsync('http://192.168.1.68:4747/video',1280,720,60)
         self.cap.start()
 
         contador = 0
@@ -593,4 +602,3 @@ class Interfaz:
             
 aplicacion1=Interfaz()
 exit()
-
