@@ -56,6 +56,8 @@ class Interfaz:
         self.BER = 0
         self.FPS = 0
         self.TramasTransmitidas = 0
+        self.tramaAnteriorValida = 0
+        
         #PATRONES POR SEGUNDO
         self.etiqueta = Label(text="FPS: ").place(relx=0.05,rely=0.15)
         self.patronesPorSegundo = ttk.Combobox(state="readonly", values=[30,60])
@@ -168,11 +170,7 @@ class Interfaz:
                 print("valida")
                 self.TramasTransmitidas=TramaBER(self.numTramas,int(self.numeroColores.get()),int(self.tamanoMatriz.get()))
                 self.TramasTransmitidas.generarTramas()
-            #Si no es valida, incrementa el valor de las tramas invalidas en 1
-            else:
-                self.tramasInvalidas += 1
-                print("trama invalida")
-        #Si no es la primera trama valida, obtiene el numero de tramas y el numero de trama
+        #Si es la primera trama valida, obtiene el numero de tramas y el numero de trama
         else:
             imagen = coloresReferencia(dst2,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
             coloresR = imagen.obtenerColoresReferencia()
@@ -180,11 +178,63 @@ class Interfaz:
             bits = matriz.indicadores()
             trama = Trama(bits,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
             trama.obtenerIndicadores()
-            #Si el número de trama es igual al anterior, descarta la trama
+            self.tramaAnteriorValida = trama.tramaValida
             print("Trama anterior: ",self.tramaAnterior)
             print("Trama actual: ",trama.numeroDeTrama)
-            if self.tramaAnterior == trama.numeroDeTrama:
-                print("igual a la anterior")
+
+            #Si el número de trama es igual al anterior, y la trama anterior fue invalida, procesa la siguiente
+            if self.tramaAnterior == trama.numeroDeTrama and self.tramaAnteriorValida == False:
+                print("igual a la anterior, trama anterior invalida, leyendo siguiente trama...")
+                c+=1
+                nextF = cv2.imread('Nuevo16-'+str(c)+'.png')
+
+                while (nextF is not None) and self.tramaAnterior == trama.numeroDeTrama:
+                    print("******************************************")
+                    print("Procesando: Nuevo16-"+str(c))
+                    dst = self.transformacionPerspectiva(nextF,c)
+                    nombreImagen = 'Nuevo_16-'+str(c)+'.png'
+                    imgl = Image.open(nombreImagen)
+                    imgl.thumbnail((300,300), Image.ANTIALIAS)
+                    imgScreen = ImageTk.PhotoImage(imgl)
+                    self.l1.configure(image = imgScreen)
+                    self.Interfaz.update()
+
+                    imagen = coloresReferencia(dst,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
+                    coloresR = imagen.obtenerColoresReferencia()
+                    matriz = muestraDeColor(dst,int(self.tamanoMatriz.get()),coloresR,int(self.numeroColores.get()))
+                    bits = matriz.mapeoaBit()
+                    trama = Trama(bits,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
+                    trama.obtenerCampos()
+                    self.tramaAnteriorValida = trama.tramaValida
+                    if trama.tramaValida == True:
+                        self.tramasValidas +=1
+                        self.tramasRecibidas = np.concatenate((self.tramasRecibidas,trama.numeroDeTrama),axis=None)
+                        print("Tramas recibidas: ",self.tramasRecibidas)
+                        self.TramasFaltantes=self.numTramas - self.tramasRecibidas.shape[0]
+                        print("Tramas faltantes: ",self.TramasFaltantes)
+                        self.cargaUtil[trama.numeroDeTrama-1] = trama.cargaUtil
+                        self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
+                        self.TF.set("Tramas Faltantes: "+format(self.TramasFaltantes))
+                        self.Interfaz.update()
+
+                        if self.tramasRecibidas.shape[0] == trama.numeroTramas:
+                            for h in range(trama.numeroTramas):
+                                self.datos = np.concatenate((self.datos,self.cargaUtil[h]),axis=None)
+                            print("Se recibieron todas las tramas")
+                            self.tiempoFinal = time.time()
+                            self.tiempoTotal = self.tiempoFinal - self.tiempoInicial
+                            print("Bits recibidos: ",self.datos.shape[0])
+                            print("Tiempo: ",self.tiempoTotal)
+                            mb.showinfo(message="Se recibieron todas las tramas", title="Título")
+                            file = open('texto.txt','a')
+                            file.write(self.frombits(self.datos))
+                            file.close()
+                            subprocess.run(["notepad","texto.txt"])
+                        break
+                    else:
+                        print("invalida")   
+                    c+=1
+                    nextF = cv2.imread('Nuevo16-'+str(c)+'.png') 
                 print("numero de tramas: ", trama.numeroTramas)
                 print("numero de trama: ", trama.numeroDeTrama)
             #En caso de ser diferente
@@ -192,22 +242,20 @@ class Interfaz:
                 #Verifica que el número de trama sea válido y guarda el numero de trama
                 if trama.numeroTramas == self.numTramas and trama.numeroDeTrama<=self.numTramas and trama.numeroDeTrama>0:
                     self.tramaAnterior = trama.numeroDeTrama
+                    self.tramaAnteriorValida = trama.tramaValida
+
+                    bits = matriz.mapeoaBit()
+                    trama = Trama(bits,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
+                    trama.obtenerCampos()
+
                     #Verifica si la trama ya fue recibida
                     if trama.numeroDeTrama in self.tramasRecibidas:
                         print("La trama ya esta")
-                        bits = matriz.mapeoaBit()
-                        trama = Trama(bits,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
-                        trama.obtenerCampos()
                         if trama.tramaValida == True:
                             print("trama valida")
-                            self.tramasValidas += 1
                         else:
                             print("trama invalida")
-                            self.tramasInvalidas += 1
                     else:
-                        bits = matriz.mapeoaBit()
-                        trama = Trama(bits,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
-                        trama.obtenerCampos()
                         self.BER=self.BER+self.TramasTransmitidas.compararTrama(trama.numeroDeTrama,bits)
                         print("BER Acumulado: ",self.BER)
                         self.tramasBitsErroneos +=1
@@ -238,13 +286,15 @@ class Interfaz:
                                 subprocess.run(["notepad","texto.txt"])
                         else:
                             self.tramasInvalidas += 1
-                            print("invalida")    
+                            print("invalida")
+        return c    
         
         
     def leerFrames(self):
         frame = cv2.imread('Nuevo16-0.png')
+        nextFrame = cv2.imread('Nuevo16-1.png')
         c=0
-        while frame is not None:
+        while (frame is not None) and (nextFrame is not None):
             print("******************************************")
             print("Procesando: Nuevo16-"+str(c))
             dst2 = self.transformacionPerspectiva(frame,c)
@@ -254,7 +304,7 @@ class Interfaz:
             imgScreen = ImageTk.PhotoImage(imgl)
             self.l1.configure(image = imgScreen)
             self.Interfaz.update()
-            self.leerTramas(dst2,c)
+            c = self.leerTramas(dst2,c)
             c = c+1
             frame = cv2.imread('Nuevo16-'+str(c)+'.png')
 
@@ -288,7 +338,7 @@ class Interfaz:
                 tamanoFinal = auxT*20
                 
                 #if len(approx)==4 and area > 9000 and area<270000:
-                if len(approx)==4 and area > 4000 and area<270000:
+                if len(approx)==4 and area > 9000 and area<270000:
                     approx1=[approx[0],approx[1],approx[3],approx[2]]
                     pts1 = np.float32(approx1)
                     pts2 = np.float32([[0,0],[0,tamanoFinal],[tamanoFinal,0],[tamanoFinal,tamanoFinal]])
@@ -406,9 +456,9 @@ class Interfaz:
 
         self.tiempoInicial = time.time()
         if self.patronesPorSegundo.get() == 30:
-            self.cap = VideoCaptureAsync('http://192.168.1.68:4747/video',1920,1080,30)
+            self.cap = VideoCaptureAsync(1,1920,1080,30)
         else:
-            self.cap = VideoCaptureAsync('http://192.168.1.68:4747/video',1280,720,60)
+            self.cap = VideoCaptureAsync(1,1280,720,60)
         self.cap.start()
 
         contador = 0
