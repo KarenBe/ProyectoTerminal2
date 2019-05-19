@@ -293,7 +293,10 @@ class Interfaz:
                                 print("Tramas totales: ", self.numTramas)
                                 self.FER = self.tramasInvalidas/(self.numTramas)
                                 self.TFER.set("FER: " + format(self.FER))
-                                promedioBER = self.BER / self.tramasBitsErroneos
+                                if self.tramasBitsErroneos != 0:
+                                    promedioBER = self.BER / self.tramasBitsErroneos
+                                else:
+                                    promedioBER = 0
                                 self.TBER.set("BER: "+format(promedioBER))
                                 print("BER promedio: ",promedioBER)
                                 self.BER = 0
@@ -329,12 +332,15 @@ class Interfaz:
             print("Procesando: Nuevo16-"+str(c))
             dst2 = self.transformacionPerspectiva(frame,c)
             nombreImagen = 'Nuevo_16-'+str(c)+'.png'
-            imgl = Image.open(nombreImagen)
-            imgl.thumbnail((300,300), Image.ANTIALIAS)
-            imgScreen = ImageTk.PhotoImage(imgl)
-            self.l1.configure(image = imgScreen)
-            self.Interfaz.update()
-            c = self.leerTramas(dst2,c)
+            try:
+                imgl = Image.open(nombreImagen)
+                imgl.thumbnail((300,300), Image.ANTIALIAS)
+                imgScreen = ImageTk.PhotoImage(imgl)
+                self.l1.configure(image = imgScreen)
+                self.Interfaz.update()
+                c = self.leerTramas(dst2,c)
+            except:
+                print('No leyo la imagen')
             c = c+1
             frame = cv2.imread('Nuevo16-'+str(c)+'.png')
         
