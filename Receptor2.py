@@ -199,7 +199,7 @@ class Interfaz:
                 print("igual a la anterior, trama anterior invalida, leyendo siguiente trama...")
                 c+=1
                 nextF = cv2.imread('Nuevo16-'+str(c)+'.png')
-
+                BER_actual=0
                 while (nextF is not None) and self.tramaAnterior == trama.numeroDeTrama:
                     print("******************************************")
                     print("Procesando: Nuevo_16-"+str(c))
@@ -246,11 +246,14 @@ class Interfaz:
                         break
                     else:
                         print("invalida")
+                        BER_actual=self.TramasTransmitidas.compararTrama(trama.numeroDeTrama,bits)
                     c+=1
-                    self.BER=self.BER+self.TramasTransmitidas.compararTrama(trama.numeroDeTrama,bits)
+                    
                     print("BER Acumulado: ",self.BER)
                     self.tramasBitsErroneos +=1
-                    nextF = cv2.imread('Nuevo16-'+str(c)+'.png') 
+                    nextF = cv2.imread('Nuevo16-'+str(c)+'.png')
+                self.BER=self.BER+BER_actual
+                print("------------------------------------------BER:",self.BER)
                 print("numero de tramas: ", trama.numeroTramas)
                 print("numero de trama: ", trama.numeroDeTrama)
             #En caso de ser diferente
