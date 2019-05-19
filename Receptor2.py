@@ -344,6 +344,7 @@ class Interfaz:
             c = c+1
             frame = cv2.imread('Nuevo16-'+str(c)+'.png')
         
+        self.tramasInvalidas = self.numTramas - self.tramasValidas
         self.Consola.insert(INSERT,'*****************************\n')
         self.Consola.insert(INSERT,'Se acabaron las imagenes\n')
         self.Consola.insert(INSERT,'Tramas validas:'+format(self.tramasValidas)+'\n')
@@ -353,7 +354,7 @@ class Interfaz:
         print("Tramas validas: ",self.tramasValidas)
         print("Tramas invalidas: ",self.tramasInvalidas)
         print("Tramas totales: ", self.numTramas)
-        
+
         self.FER = self.tramasInvalidas/(self.numTramas)
         self.TFER.set("FER: " + format(self.FER))
         if self.tramasBitsErroneos != 0:
