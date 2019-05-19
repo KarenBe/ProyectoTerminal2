@@ -59,6 +59,7 @@ class Interfaz:
         self.tramaAnteriorValida = 0
         self.TramaInicial = 0
         self.ciclos = 0
+        self.TramaInv = 0
         
         #PATRONES POR SEGUNDO
         self.etiqueta = Label(text="FPS: ").place(relx=0.05,rely=0.15)
@@ -291,7 +292,6 @@ class Interfaz:
                             print("trama invalida")
                             self.Consola.insert(INSERT,'trama invalida\n')
                     else:
-                        
                         if trama.tramaValida == True and trama.numeroDeTrama>0:
                             self.tramasValidas +=1
                             self.tramasRecibidas = np.concatenate((self.tramasRecibidas,trama.numeroDeTrama),axis=None)
@@ -338,6 +338,7 @@ class Interfaz:
                                 subprocess.run(["notepad","texto.txt"])
                         else:
                             print("invalida")
+                            self.TramaInv +=1
                             self.Consola.insert(INSERT,'trama invalida\n')
                             self.tramaAnteriorValida = False
         return c    
@@ -368,14 +369,14 @@ class Interfaz:
         self.Consola.insert(INSERT,'*****************************\n')
         self.Consola.insert(INSERT,'Se acabaron las imagenes\n')
         self.Consola.insert(INSERT,'Tramas validas:'+format(self.tramasValidas)+'\n')
-        self.Consola.insert(INSERT,'Tramas invalidas:'+format(self.tramasInvalidas)+'\n')
+        self.Consola.insert(INSERT,'Tramas invalidas:'+format(self.TramaInv)+'\n')
         self.Consola.insert(INSERT,'Tramas totales:'+format(self.tramasInvalidas + self.tramasValidas)+'\n')
 
         print("Tramas validas: ",self.tramasValidas)
-        print("Tramas invalidas: ",self.tramasInvalidas)
+        print("Tramas invalidas: ",self.TramaInv)
         print("Tramas totales: ", self.numTramas)
 
-        self.FER = self.tramasInvalidas/(self.numTramas)
+        self.FER = self.tramasInvalidas/self.TramaInv
         self.TFER.set("FER: " + format(self.FER))
         if self.tramasBitsErroneos != 0:
             promedioBER = self.BER / self.tramasBitsErroneos
