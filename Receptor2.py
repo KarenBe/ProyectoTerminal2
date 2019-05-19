@@ -161,25 +161,29 @@ class Interfaz:
             trama = Trama(bits,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
             trama.obtenerCampos()
             #si la trama es valida, almacena el número total de tramas e incrementa las tramas validas en 1
-            if trama.tramaValida == True:
-                print("primera trama recibida correctamente: ",c)
-                self.numTramas = trama.numeroTramas
-                self.TramaInicial = trama.numeroDeTrama
-                self.tramaAnterior = trama.numeroDeTrama
-                print("Trama anterior: ",self.tramaAnterior)
-                if not self.cargaUtil:
-                    self.cargaUtil = np.ones((trama.numeroTramas,1),dtype=int)
-                    self.cargaUtil = self.cargaUtil.tolist()
-                self.tramasRecibidas = np.concatenate((self.tramasRecibidas,trama.numeroDeTrama),axis=None)
-                print("Tramas recibidas: ",self.tramasRecibidas)
-                self.cargaUtil[trama.numeroDeTrama-1] = trama.cargaUtil
-                self.tramasValidas += 1
-                print("valida")
-                self.TramasTransmitidas=TramaBER(self.numTramas,int(self.numeroColores.get()),int(self.tamanoMatriz.get()))
-                self.TramasTransmitidas.generarTramas()
-                self.Consola.insert(INSERT,'Primera Trama\n')
-                self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
-                self.TF.set("Tramas Faltantes: "+format(trama.numeroDeTrama-1))
+            if trama.numeroDeTrama in self.tramasRecibidas:
+                print("La trama ya esta")
+            else:
+                if trama.tramaValida == True:
+                    print("primera trama recibida correctamente: ",c)
+                    self.numTramas = trama.numeroTramas
+                    self.TramaInicial = trama.numeroDeTrama
+                    self.tramaAnterior = trama.numeroDeTrama
+                    print("Trama anterior: ",self.tramaAnterior)
+                    if not self.cargaUtil:
+                        self.cargaUtil = np.ones((trama.numeroTramas,1),dtype=int)
+                        self.cargaUtil = self.cargaUtil.tolist()
+                    self.tramasRecibidas = np.concatenate((self.tramasRecibidas,trama.numeroDeTrama),axis=None)
+                    print("Tramas recibidas: ",self.tramasRecibidas)
+                    self.cargaUtil[trama.numeroDeTrama-1] = trama.cargaUtil
+                    self.tramasValidas += 1
+                    print("valida")
+                    self.TramasTransmitidas=TramaBER(self.numTramas,int(self.numeroColores.get()),int(self.tamanoMatriz.get()))
+                    self.TramasTransmitidas.generarTramas()
+                    self.Consola.insert(INSERT,'Primera Trama\n')
+                    self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
+                    self.TF.set("Tramas Faltantes: "+format(self.numTramas-1))
+                
         #Si es la primera trama valida, obtiene el numero de tramas y el numero de trama
         else:
             imagen = coloresReferencia(dst2,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
@@ -188,15 +192,16 @@ class Interfaz:
             bits = matriz.indicadores()
             trama = Trama(bits,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
             trama.obtenerIndicadores()
-            self.tramaAnteriorValida = trama.tramaValida
+            #self.tramaAnteriorValida = trama.tramaValida
             print("Trama anterior: ",self.tramaAnterior)
             print("Trama actual: ",trama.numeroDeTrama)
+            print("Trama valida: ",trama.tramaValida)
             self.Consola.insert(INSERT,'*****************************\n')
             self.Consola.insert(INSERT,'Trama anterior: '+format(self.tramaAnterior)+'\n')
-            self.Consola.insert(INSERT,'Trama actual: '+format(trama.numeroDeTrama)+'\n')
             #Si el número de trama es igual al anterior, y la trama anterior fue invalida, procesa la siguiente
             if self.tramaAnterior == trama.numeroDeTrama and self.tramaAnteriorValida == False:
                 print("igual a la anterior, trama anterior invalida, leyendo siguiente trama...")
+                print("-----------------------------------------------------------Entro a while")
                 c+=1
                 nextF = cv2.imread('Nuevo16-'+str(c)+'.png')
                 BER_actual=0
@@ -221,29 +226,32 @@ class Interfaz:
                     self.tramaAnteriorValida = trama.tramaValida
                     if trama.tramaValida == True:
                         self.tramasValidas +=1
-                        self.tramasRecibidas = np.concatenate((self.tramasRecibidas,trama.numeroDeTrama),axis=None)
-                        print("Tramas recibidas: ",self.tramasRecibidas)
-                        self.TramasFaltantes=self.numTramas - self.tramasRecibidas.shape[0]
-                        print("Tramas faltantes: ",self.TramasFaltantes)
-                        self.cargaUtil[trama.numeroDeTrama-1] = trama.cargaUtil
-                        self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
-                        self.TF.set("Tramas Faltantes: "+format(self.TramasFaltantes))
-                        self.Interfaz.update()
+                        if trama.numeroDeTrama in self.tramasRecibidas:
+                            print("Ya esta")
+                        else:
+                            self.tramasRecibidas = np.concatenate((self.tramasRecibidas,trama.numeroDeTrama),axis=None)
+                            print("Tramas recibidas: ",self.tramasRecibidas)
+                            self.TramasFaltantes=self.numTramas - self.tramasRecibidas.shape[0]
+                            print("Tramas faltantes: ",self.TramasFaltantes)
+                            self.cargaUtil[trama.numeroDeTrama-1] = trama.cargaUtil
+                            self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
+                            self.TF.set("Tramas Faltantes: "+format(self.TramasFaltantes))
+                            self.Interfaz.update()
 
-                        if self.tramasRecibidas.shape[0] == trama.numeroTramas:
-                            for h in range(trama.numeroTramas):
-                                self.datos = np.concatenate((self.datos,self.cargaUtil[h]),axis=None)
-                            print("Se recibieron todas las tramas")
-                            self.tiempoFinal = time.time()
-                            self.tiempoTotal = self.tiempoFinal - self.tiempoInicial
-                            print("Bits recibidos: ",self.datos.shape[0])
-                            print("Tiempo: ",self.tiempoTotal)
-                            mb.showinfo(message="Se recibieron todas las tramas", title="Título")
-                            file = open('texto.txt','a')
-                            file.write(self.frombits(self.datos))
-                            file.close()
-                            subprocess.run(["notepad","texto.txt"])
-                        break
+                            if self.tramasRecibidas.shape[0] == trama.numeroTramas:
+                                for h in range(trama.numeroTramas):
+                                    self.datos = np.concatenate((self.datos,self.cargaUtil[h]),axis=None)
+                                print("Se recibieron todas las tramas")
+                                self.tiempoFinal = time.time()
+                                self.tiempoTotal = self.tiempoFinal - self.tiempoInicial
+                                print("Bits recibidos: ",self.datos.shape[0])
+                                print("Tiempo: ",self.tiempoTotal)
+                                mb.showinfo(message="Se recibieron todas las tramas", title="Título")
+                                file = open('texto.txt','a')
+                                file.write(self.frombits(self.datos))
+                                file.close()
+                                subprocess.run(["notepad","texto.txt"])
+                            break
                     else:
                         print("invalida")
                         BER_actual=self.TramasTransmitidas.compararTrama(trama.numeroDeTrama,bits)
@@ -505,9 +513,9 @@ class Interfaz:
 
         self.tiempoInicial = time.time()
         if self.patronesPorSegundo.get() == 30:
-            self.cap = VideoCaptureAsync(1,1920,1080,30)
+            self.cap = VideoCaptureAsync('http://192.168.1.68:4747/video',1920,1080,30)
         else:
-            self.cap = VideoCaptureAsync(1,1280,720,60)
+            self.cap = VideoCaptureAsync('http://192.168.1.68:4747/video',1280,720,60)
         self.cap.start()
 
         contador = 0
