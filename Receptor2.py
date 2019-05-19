@@ -274,7 +274,7 @@ class Interfaz:
                             self.Consola.insert(INSERT,'trama invalida\n')
                     else:
                         
-                        if trama.tramaValida == True:
+                        if trama.tramaValida == True and trama.numeroDeTrama>0:
                             self.tramasValidas +=1
                             self.tramasRecibidas = np.concatenate((self.tramasRecibidas,trama.numeroDeTrama),axis=None)
                             print("Tramas recibidas: ",self.tramasRecibidas)
@@ -353,7 +353,7 @@ class Interfaz:
         print("Tramas validas: ",self.tramasValidas)
         print("Tramas invalidas: ",self.tramasInvalidas)
         print("Tramas totales: ", self.numTramas)
-
+        
         self.FER = self.tramasInvalidas/(self.numTramas)
         self.TFER.set("FER: " + format(self.FER))
         if self.tramasBitsErroneos != 0:
@@ -501,9 +501,9 @@ class Interfaz:
 
         self.tiempoInicial = time.time()
         if self.patronesPorSegundo.get() == 30:
-            self.cap = VideoCaptureAsync('http://192.168.1.68:4747/video',1920,1080,30)
+            self.cap = VideoCaptureAsync(1,1920,1080,30)
         else:
-            self.cap = VideoCaptureAsync('http://192.168.1.68:4747/video',1280,720,60)
+            self.cap = VideoCaptureAsync(1,1280,720,60)
         self.cap.start()
 
         contador = 0
