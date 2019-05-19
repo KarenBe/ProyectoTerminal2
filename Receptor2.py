@@ -277,7 +277,7 @@ class Interfaz:
                             self.Consola.insert(INSERT,'trama invalida\n')
                     else:
                         
-                        if trama.tramaValida == True:
+                        if trama.tramaValida == True and trama.numeroDeTrama>0:
                             self.tramasValidas +=1
                             self.tramasRecibidas = np.concatenate((self.tramasRecibidas,trama.numeroDeTrama),axis=None)
                             print("Tramas recibidas: ",self.tramasRecibidas)
@@ -347,6 +347,7 @@ class Interfaz:
             c = c+1
             frame = cv2.imread('Nuevo16-'+str(c)+'.png')
         
+        self.tramasInvalidas = self.numTramas - self.tramasValidas
         self.Consola.insert(INSERT,'*****************************\n')
         self.Consola.insert(INSERT,'Se acabaron las imagenes\n')
         self.Consola.insert(INSERT,'Tramas validas:'+format(self.tramasValidas)+'\n')
@@ -504,9 +505,9 @@ class Interfaz:
 
         self.tiempoInicial = time.time()
         if self.patronesPorSegundo.get() == 30:
-            self.cap = VideoCaptureAsync('http://192.168.1.68:4747/video',1920,1080,30)
+            self.cap = VideoCaptureAsync(1,1920,1080,30)
         else:
-            self.cap = VideoCaptureAsync('http://192.168.1.68:4747/video',1280,720,60)
+            self.cap = VideoCaptureAsync(1,1280,720,60)
         self.cap.start()
 
         contador = 0
