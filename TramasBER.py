@@ -23,17 +23,21 @@ class TramaBER:
             cont = self.contenido[(x*self.BitsPorTrama):((x+1)*self.BitsPorTrama)]
             tramaX = EstructuraTrama(self.NumTramas,x+1,self.BitsPorTrama,self.tamanoUtil,cont)
             self.tramas.append(tramaX.getTrama())
+        print("Total de tramas: ",len(self.tramas))
             
     
     def compararTrama(self,numTrama,arraybits):
-        res=self.tramas[numTrama-1]-arraybits
-        incorrectos=sum(res!=0)
-        BER=incorrectos/len(arraybits)
-        print("# Bits incorrectos:",incorrectos)
-        print("BER de la trama: ",BER)
-        print("Bits correcto: ",self.tramas[numTrama-1])
-        print("Bits recibidos: ",arraybits)
-        return BER
+        if numTrama-1 < self.NumTramas:
+            res=self.tramas[numTrama-1]-arraybits
+            incorrectos=sum(res!=0)
+            BER=incorrectos/len(arraybits)
+            print("# Bits incorrectos:",incorrectos)
+            print("BER de la trama: ",BER)
+            print("Bits correcto: ",self.tramas[numTrama-1])
+            print("Bits recibidos: ",arraybits)
+            return BER
+        else:
+            return 0
         
 
         

@@ -78,7 +78,7 @@ class Interfaz:
 
         #SEGUNDOS
         self.etiqueta3 = Label(text="Segundos capturados").place(relx=0.05,rely=0.3)
-        self.segundos = ttk.Combobox(state="readonly", values=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,18,19,20])
+        self.segundos = ttk.Combobox(state="readonly", values=[1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,22,24,26,28,30])
         self.segundos.place(relx=0.15,rely=0.3)
         self.segundos.current(0)
 
@@ -101,7 +101,7 @@ class Interfaz:
         self.TR = StringVar()
         self.TF = StringVar()
         self.etiquetaR = Label(self.Interfaz,textvariable=self.TR).place(relx=0.6,rely=0.15)
-        self.etiquetaFa = Label(self.Interfaz,textvariable=self.TF).place(relx=0.6,rely=0.20)
+        self.etiquetaFa = Label(self.Interfaz,textvariable=self.TF).place(relx=0.6,rely=0.35)
         self.TR.set("Tramas Recibidas: ")
         self.TF.set("Tramas Faltantes: ")
         
@@ -111,12 +111,17 @@ class Interfaz:
         self.TFPS.set("FPS: ")
         #FER
         self.TFER = StringVar()
-        self.etiquetaF = Label(self.Interfaz,textvariable=self.TFER).place(relx=0.6,rely=0.25)
+        self.etiquetaF = Label(self.Interfaz,textvariable=self.TFER).place(relx=0.6,rely=0.4)
         self.TFER.set("FER: ")
         #BER
         self.TBER = StringVar()
-        self.etiquetaB = Label(self.Interfaz,textvariable=self.TBER).place(relx=0.6,rely=0.35)
+        self.etiquetaB = Label(self.Interfaz,textvariable=self.TBER).place(relx=0.6,rely=0.45)
         self.TBER.set("BER: ")
+
+        self.Consola = st.ScrolledText(self.Interfaz, width = 50, height = 15, wrap = WORD, background ='White')
+        self.Consola.grid(row = 0, column = 1)
+        self.Consola.place(relx=0.6,rely=0.5)
+
 
         self.Interfaz.mainloop()
 
@@ -170,6 +175,9 @@ class Interfaz:
                 print("valida")
                 self.TramasTransmitidas=TramaBER(self.numTramas,int(self.numeroColores.get()),int(self.tamanoMatriz.get()))
                 self.TramasTransmitidas.generarTramas()
+                self.Consola.insert(INSERT,'Primera Trama\n')
+                self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
+                self.TF.set("Tramas Faltantes: "+format(trama.numeroDeTrama-1))
         #Si es la primera trama valida, obtiene el numero de tramas y el numero de trama
         else:
             imagen = coloresReferencia(dst2,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
@@ -181,7 +189,9 @@ class Interfaz:
             self.tramaAnteriorValida = trama.tramaValida
             print("Trama anterior: ",self.tramaAnterior)
             print("Trama actual: ",trama.numeroDeTrama)
-
+            self.Consola.insert(INSERT,'*****************************\n')
+            self.Consola.insert(INSERT,'Trama anterior: '+format(self.tramaAnterior)+'\n')
+            self.Consola.insert(INSERT,'Trama actual: '+format(trama.numeroDeTrama)+'\n')
             #Si el número de trama es igual al anterior, y la trama anterior fue invalida, procesa la siguiente
             if self.tramaAnterior == trama.numeroDeTrama and self.tramaAnteriorValida == False:
                 print("igual a la anterior, trama anterior invalida, leyendo siguiente trama...")
@@ -190,7 +200,7 @@ class Interfaz:
 
                 while (nextF is not None) and self.tramaAnterior == trama.numeroDeTrama:
                     print("******************************************")
-                    print("Procesando: Nuevo16-"+str(c))
+                    print("Procesando: Nuevo_16-"+str(c))
                     dst = self.transformacionPerspectiva(nextF,c)
                     nombreImagen = 'Nuevo_16-'+str(c)+'.png'
                     imgl = Image.open(nombreImagen)
@@ -198,6 +208,7 @@ class Interfaz:
                     imgScreen = ImageTk.PhotoImage(imgl)
                     self.l1.configure(image = imgScreen)
                     self.Interfaz.update()
+
 
                     imagen = coloresReferencia(dst,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
                     coloresR = imagen.obtenerColoresReferencia()
@@ -232,8 +243,11 @@ class Interfaz:
                             subprocess.run(["notepad","texto.txt"])
                         break
                     else:
-                        print("invalida")   
+                        print("invalida")
                     c+=1
+                    self.BER=self.BER+self.TramasTransmitidas.compararTrama(trama.numeroDeTrama,bits)
+                    print("BER Acumulado: ",self.BER)
+                    self.tramasBitsErroneos +=1
                     nextF = cv2.imread('Nuevo16-'+str(c)+'.png') 
                 print("numero de tramas: ", trama.numeroTramas)
                 print("numero de trama: ", trama.numeroDeTrama)
@@ -251,14 +265,14 @@ class Interfaz:
                     #Verifica si la trama ya fue recibida
                     if trama.numeroDeTrama in self.tramasRecibidas:
                         print("La trama ya esta")
+                        self.Consola.insert(INSERT,'La trama ya esta\n')
                         if trama.tramaValida == True:
                             print("trama valida")
+                            self.Consola.insert(INSERT,'trama valida\n')
                         else:
                             print("trama invalida")
+                            self.Consola.insert(INSERT,'trama invalida\n')
                     else:
-                        self.BER=self.BER+self.TramasTransmitidas.compararTrama(trama.numeroDeTrama,bits)
-                        print("BER Acumulado: ",self.BER)
-                        self.tramasBitsErroneos +=1
                         
                         if trama.tramaValida == True:
                             self.tramasValidas +=1
@@ -287,6 +301,7 @@ class Interfaz:
                         else:
                             self.tramasInvalidas += 1
                             print("invalida")
+                            self.Consola.insert(INSERT,'trama invalida\n')
         return c    
         
         
@@ -307,15 +322,24 @@ class Interfaz:
             c = self.leerTramas(dst2,c)
             c = c+1
             frame = cv2.imread('Nuevo16-'+str(c)+'.png')
-
+        
+        self.Consola.insert(INSERT,'*****************************\n')
+        self.Consola.insert(INSERT,'Se acabaron las imagenes\n')
+        self.Consola.insert(INSERT,'Tramas validas:'+format(self.tramasValidas)+'\n')
+        self.Consola.insert(INSERT,'Tramas invalidas:'+format(self.tramasInvalidas)+'\n')
+        self.Consola.insert(INSERT,'Tramas totales:'+format(self.tramasInvalidas + self.tramasValidas)+'\n')
 
         print("Tramas validas: ",self.tramasValidas)
         print("Tramas invalidas: ",self.tramasInvalidas)
         print("Tramas totales: ", self.tramasInvalidas + self.tramasValidas)
+        
 
         self.FER = self.tramasInvalidas/(self.tramasInvalidas + self.tramasValidas)
         self.TFER.set("FER: " + format(self.FER))
-        promedioBER = self.BER / self.tramasBitsErroneos
+        if self.tramasBitsErroneos != 0:
+            promedioBER = self.BER / self.tramasBitsErroneos
+        else:
+            promedioBER = 0
         self.TBER.set("BER: "+format(promedioBER))
         print("BER promedio: ",promedioBER)
     
@@ -339,7 +363,7 @@ class Interfaz:
                 tamanoFinal = auxT*20
                 
                 #if len(approx)==4 and area > 9000 and area<270000:
-                if len(approx)==4 and area > 9000 and area<270000:
+                if len(approx)==4 and area > 5000 and area<270000:
                     approx1=[approx[0],approx[1],approx[3],approx[2]]
                     pts1 = np.float32(approx1)
                     pts2 = np.float32([[0,0],[0,tamanoFinal],[tamanoFinal,0],[tamanoFinal,tamanoFinal]])
@@ -457,9 +481,9 @@ class Interfaz:
 
         self.tiempoInicial = time.time()
         if self.patronesPorSegundo.get() == 30:
-            self.cap = VideoCaptureAsync(1,1920,1080,30)
+            self.cap = VideoCaptureAsync('http://192.168.1.68:4747/video',1920,1080,30)
         else:
-            self.cap = VideoCaptureAsync(1,1280,720,60)
+            self.cap = VideoCaptureAsync('http://192.168.1.68:4747/video',1280,720,60)
         self.cap.start()
 
         contador = 0
@@ -648,7 +672,7 @@ class Interfaz:
         self.hilo.join()
         #cv2.destroyAllWindows()
         self.cap.stop()
-        self.cap.exit()
+        exit()
         
             
 aplicacion1=Interfaz()
