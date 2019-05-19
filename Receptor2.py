@@ -58,6 +58,7 @@ class Interfaz:
         self.TramasTransmitidas = 0
         self.tramaAnteriorValida = 0
         self.TramaInicial = 0
+        self.ciclos = 0
         
         #PATRONES POR SEGUNDO
         self.etiqueta = Label(text="FPS: ").place(relx=0.05,rely=0.15)
@@ -164,11 +165,12 @@ class Interfaz:
             if trama.numeroDeTrama in self.tramasRecibidas:
                 print("La trama ya esta")
             else:
-                if trama.tramaValida == True:
+                if trama.tramaValida == True and self.ciclos == 0:
                     print("primera trama recibida correctamente: ",c)
                     self.numTramas = trama.numeroTramas
                     self.TramaInicial = trama.numeroDeTrama
                     self.tramaAnterior = trama.numeroDeTrama
+                    self.tramaAnteriorValida = trama.tramaValida
                     print("Trama anterior: ",self.tramaAnterior)
                     if not self.cargaUtil:
                         self.cargaUtil = np.ones((trama.numeroTramas,1),dtype=int)
@@ -195,9 +197,11 @@ class Interfaz:
             #self.tramaAnteriorValida = trama.tramaValida
             print("Trama anterior: ",self.tramaAnterior)
             print("Trama actual: ",trama.numeroDeTrama)
-            print("Trama valida: ",trama.tramaValida)
+            print("Trama validez: ",self.tramaAnteriorValida)
             self.Consola.insert(INSERT,'*****************************\n')
             self.Consola.insert(INSERT,'Trama anterior: '+format(self.tramaAnterior)+'\n')
+            self.Consola.insert(INSERT,'Trama actual: '+format(trama.numeroDeTrama)+'\n')
+
             #Si el número de trama es igual al anterior, y la trama anterior fue invalida, procesa la siguiente
             if self.tramaAnterior == trama.numeroDeTrama and self.tramaAnteriorValida == False:
                 print("igual a la anterior, trama anterior invalida, leyendo siguiente trama...")
@@ -226,9 +230,11 @@ class Interfaz:
                     self.tramaAnteriorValida = trama.tramaValida
                     if trama.tramaValida == True:
                         self.tramasValidas +=1
+                        
                         if trama.numeroDeTrama in self.tramasRecibidas:
                             print("Ya esta")
                         else:
+                            BER_actual=0
                             self.tramasRecibidas = np.concatenate((self.tramasRecibidas,trama.numeroDeTrama),axis=None)
                             print("Tramas recibidas: ",self.tramasRecibidas)
                             self.TramasFaltantes=self.numTramas - self.tramasRecibidas.shape[0]
@@ -256,12 +262,13 @@ class Interfaz:
                         print("invalida")
                         BER_actual=self.TramasTransmitidas.compararTrama(trama.numeroDeTrama,bits)
                     c+=1
-                    
+                    nextF = cv2.imread('Nuevo16-'+str(c)+'.png')
+                if BER_actual !=0:
+                    self.BER=self.BER+BER_actual
                     print("BER Acumulado: ",self.BER)
                     self.tramasBitsErroneos +=1
-                    nextF = cv2.imread('Nuevo16-'+str(c)+'.png')
-                self.BER=self.BER+BER_actual
-                print("------------------------------------------BER:",self.BER)
+                    self.Consola.insert(INSERT,'BER de la trama: '+format(self.BER)+'\n')
+                    print("------------------------------------------BER:",self.BER)
                 print("numero de tramas: ", trama.numeroTramas)
                 print("numero de trama: ", trama.numeroDeTrama)
             #En caso de ser diferente
@@ -313,6 +320,7 @@ class Interfaz:
                                 self.BER = 0
                                 self.FER = 0
                                 self.numTramas = 0
+                                self.ciclos = 1
                                 self.TramaInicial = 0
 
                             if self.tramasRecibidas.shape[0] == trama.numeroTramas:
@@ -331,6 +339,7 @@ class Interfaz:
                         else:
                             print("invalida")
                             self.Consola.insert(INSERT,'trama invalida\n')
+                            self.tramaAnteriorValida = False
         return c    
         
         
