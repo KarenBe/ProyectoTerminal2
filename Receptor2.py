@@ -186,6 +186,8 @@ class Interfaz:
                     self.Consola.insert(INSERT,'Primera Trama\n')
                     self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
                     self.TF.set("Tramas Faltantes: "+format(self.numTramas-1))
+                    self.Consola.insert(END, "")
+                    self.Consola.see(END)
                 
         #Si es la primera trama valida, obtiene el numero de tramas y el numero de trama
         else:
@@ -202,6 +204,8 @@ class Interfaz:
             self.Consola.insert(INSERT,'*****************************\n')
             self.Consola.insert(INSERT,'Trama anterior: '+format(self.tramaAnterior)+'\n')
             self.Consola.insert(INSERT,'Trama actual: '+format(trama.numeroDeTrama)+'\n')
+            self.Consola.insert(END, "")
+            self.Consola.see(END)
 
             #Si el número de trama es igual al anterior, y la trama anterior fue invalida, procesa la siguiente
             if self.tramaAnterior == trama.numeroDeTrama and self.tramaAnteriorValida == False:
@@ -265,10 +269,14 @@ class Interfaz:
                     c+=1
                     nextF = cv2.imread('Nuevo16-'+str(c)+'.png')
                 if BER_actual !=0:
+                    self.tramasInvalidas += 1
                     self.BER=self.BER+BER_actual
                     print("BER Acumulado: ",self.BER)
                     self.tramasBitsErroneos +=1
                     self.Consola.insert(INSERT,'BER de la trama: '+format(self.BER)+'\n')
+                    self.Consola.insert(END, "")
+                    self.Consola.see(END)
+
                     print("------------------------------------------BER:",self.BER)
                 print("numero de tramas: ", trama.numeroTramas)
                 print("numero de trama: ", trama.numeroDeTrama)
@@ -291,6 +299,8 @@ class Interfaz:
                         else:
                             print("trama invalida")
                             self.Consola.insert(INSERT,'trama invalida\n')
+                        self.Consola.insert(END, "")
+                        self.Consola.see(END)
                     else:
                         if trama.tramaValida == True and trama.numeroDeTrama>0:
                             self.tramasValidas +=1
@@ -304,13 +314,13 @@ class Interfaz:
                             self.Interfaz.update()
 
                             if self.TramaInicial == trama.numeroDeTrama+1:
-                                self.tramasInvalidas = self.numTramas - self.tramasValidas
-                                print("Aqui",self.numTramas,trama.numeroDeTrama)
-                                print("Tramas validas: ",self.tramasValidas)
-                                print("Tramas invalidas: ",self.tramasInvalidas)
-                                print("Tramas totales: ", self.numTramas)
-                                self.FER = self.tramasInvalidas/(self.numTramas)
-                                self.TFER.set("FER: " + format(self.FER))
+                                #Tramas que llegaron
+                                #self.tramasValidas = self.tramasRecibidas.shape[0]
+                                #Tramas totales
+                                #self.tramasTotales = self.tramasValidas + self.tramasInvalidas
+                                #Calculo de FER
+                                #self.FER = self.tramasInvalidas / self.tramasTotales
+
                                 if self.tramasBitsErroneos != 0:
                                     promedioBER = self.BER / self.tramasBitsErroneos
                                 else:
@@ -331,6 +341,11 @@ class Interfaz:
                                 self.tiempoTotal = self.tiempoFinal - self.tiempoInicial
                                 print("Bits recibidos: ",self.datos.shape[0])
                                 print("Tiempo: ",self.tiempoTotal)
+                                self.tramasValidas = self.tramasRecibidas.shape[0]
+
+                                tramasTotales = self.tramasValidas + self.tramasInvalidas
+                                self.FER = self.tramasInvalidas / tramasTotales
+                                self.TFER.set("FER: " + format(self.FER))
                                 mb.showinfo(message="Se recibieron todas las tramas", title="Título")
                                 file = open('texto.txt','a')
                                 file.write(self.frombits(self.datos))
@@ -340,6 +355,9 @@ class Interfaz:
                             print("invalida")
                             self.TramaInv +=1
                             self.Consola.insert(INSERT,'trama invalida\n')
+                            self.Consola.insert(END, "")
+                            self.Consola.see(END)
+
                             self.tramaAnteriorValida = False
         return c    
         
@@ -365,18 +383,23 @@ class Interfaz:
             c = c+1
             frame = cv2.imread('Nuevo16-'+str(c)+'.png')
         
-        self.tramasInvalidas = self.numTramas - self.tramasValidas
+        #Tramas que llegaron
+        self.tramasValidas = self.tramasRecibidas.shape[0]
+        tramasTotales = self.tramasValidas + self.tramasInvalidas
+        self.FER = self.tramasInvalidas / tramasTotales
+
         self.Consola.insert(INSERT,'*****************************\n')
         self.Consola.insert(INSERT,'Se acabaron las imagenes\n')
         self.Consola.insert(INSERT,'Tramas validas:'+format(self.tramasValidas)+'\n')
-        self.Consola.insert(INSERT,'Tramas invalidas:'+format(self.TramaInv)+'\n')
-        self.Consola.insert(INSERT,'Tramas totales:'+format(self.tramasInvalidas + self.tramasValidas)+'\n')
+        self.Consola.insert(INSERT,'Tramas invalidas:'+format(self.tramasInvalidas)+'\n')
+        self.Consola.insert(INSERT,'Tramas totales:'+format(tramasTotales)+'\n')
+        self.Consola.insert(END, "")
+        self.Consola.see(END)
 
         print("Tramas validas: ",self.tramasValidas)
-        print("Tramas invalidas: ",self.TramaInv)
-        print("Tramas totales: ", self.numTramas)
+        print("Tramas invalidas: ",self.tramasInvalidas)
+        print("Tramas totales: ", tramasTotales)
 
-        self.FER = self.tramasInvalidas/self.TramaInv
         self.TFER.set("FER: " + format(self.FER))
         if self.tramasBitsErroneos != 0:
             promedioBER = self.BER / self.tramasBitsErroneos
