@@ -27,17 +27,18 @@ class TramaBER:
             
     
     def compararTrama(self,numTrama,arraybits):
-        if numTrama-1 < self.NumTramas:
+        if numTrama-1 < self.NumTramas and len(arraybits) == len(self.tramas[numTrama-1]):
+            print(numTrama)
             res=self.tramas[numTrama-1]-arraybits
             incorrectos=sum(res!=0)
-            BER=incorrectos/len(arraybits)
+            #BER=incorrectos/len(arraybits)
             print("# Bits incorrectos:",incorrectos)
-            print("BER de la trama: ",BER)
+            #print("BER de la trama: ",BER)
             print("Bits correcto: ",self.tramas[numTrama-1])
             print("Bits recibidos: ",arraybits)
-            return BER
+            return incorrectos
         else:
-            return 0
+            return 1
         
 
         

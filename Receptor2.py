@@ -61,6 +61,11 @@ class Interfaz:
         self.TramaInicial = 0
         self.ciclos = 0
         self.TramaInv = 0
+        self.bitsTrama =0
+        self.errores_totales = 0
+        self.tramasTotales=0
+        self.valor = 0
+        self.mostrarRecibidas = ""
         
         #PATRONES POR SEGUNDO
         self.etiqueta = Label(text="FPS: ").place(relx=0.05,rely=0.15)
@@ -174,19 +179,23 @@ class Interfaz:
                     self.tramaAnterior = trama.numeroDeTrama
                     self.tramaAnteriorValida = trama.tramaValida
                     print("Trama anterior: ",self.tramaAnterior)
-                    self.errores = np.ones(self.numTramas)
+                    self.errores = (-1)*np.ones(self.numTramas)
+                    self.bitsTrama=len(bits)
                     if not self.cargaUtil:
                         self.cargaUtil = np.ones((trama.numeroTramas,1),dtype=int)
                         self.cargaUtil = self.cargaUtil.tolist()
                     self.tramasRecibidas = np.concatenate((self.tramasRecibidas,trama.numeroDeTrama),axis=None)
+                    
                     print("Tramas recibidas: ",self.tramasRecibidas)
                     self.cargaUtil[trama.numeroDeTrama-1] = trama.cargaUtil
                     self.tramasValidas += 1
                     print("valida")
                     self.TramasTransmitidas=TramaBER(self.numTramas,int(self.numeroColores.get()),int(self.tamanoMatriz.get()))
                     self.TramasTransmitidas.generarTramas()
+                    errores_BER = self.TramasTransmitidas.compararTrama(trama.numeroDeTrama,bits)
+                    self.errores[trama.numeroDeTrama-1]=errores_BER
                     self.Consola.insert(INSERT,'Primera Trama\n')
-                    self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
+                    self.TR.set("Tramas Recibidas: "+format(self.mostrarRecibidas)+format(self.tramasRecibidas))
                     self.TF.set("Tramas Faltantes: "+format(self.numTramas-1))
                     self.Consola.insert(END, "")
                     self.Consola.see(END)
@@ -203,12 +212,17 @@ class Interfaz:
             print("Trama anterior: ",self.tramaAnterior)
             print("Trama actual: ",trama.numeroDeTrama)
             print("Trama validez: ",self.tramaAnteriorValida)
+            print("Trama numeroTRamas: ",trama.numeroTramas)
             self.Consola.insert(INSERT,'*****************************\n')
             self.Consola.insert(INSERT,'Trama anterior: '+format(self.tramaAnterior)+'\n')
             self.Consola.insert(INSERT,'Trama actual: '+format(trama.numeroDeTrama)+'\n')
             self.Consola.insert(END, "")
             self.Consola.see(END)
-
+            BER_actual=0
+            if trama.numeroDeTrama != 0 and trama.numeroDeTrama <= self.numTramas and trama.numeroDeTrama not in self.tramasRecibidas:
+                self.bitsAnterior=matriz.mapeoaBit()
+                errores_BER = self.TramasTransmitidas.compararTrama(trama.numeroDeTrama,self.bitsAnterior)
+                self.errores[trama.numeroDeTrama-1]=errores_BER
             #Si el número de trama es igual al anterior, y la trama anterior fue invalida, procesa la siguiente
             if self.tramaAnterior == trama.numeroDeTrama and self.tramaAnteriorValida == False:
                 print("igual a la anterior, trama anterior invalida, leyendo siguiente trama...")
@@ -236,12 +250,13 @@ class Interfaz:
                     self.Interfaz.update()
                     self.tramaAnteriorValida = trama.tramaValida
                     if self.tramaAnterior == trama.numeroDeTrama:
+
                         if trama.tramaValida == True:
                             self.tramasValidas +=1
-                            BER_actual=0
                             if trama.numeroDeTrama in self.tramasRecibidas:
                                 print("Ya esta")
                             else:
+                                BER_actual=0
                                 self.tramasRecibidas = np.concatenate((self.tramasRecibidas,trama.numeroDeTrama),axis=None)
                                 print("Tramas recibidas: ",self.tramasRecibidas)
                                 self.TramasFaltantes=self.numTramas - self.tramasRecibidas.shape[0]
@@ -250,7 +265,6 @@ class Interfaz:
                                 self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
                                 self.TF.set("Tramas Faltantes: "+format(self.TramasFaltantes))
                                 self.Consola.insert(INSERT,'Ya se encontró una trama : '+format(trama.numeroDeTrama)+'\n')
-                                self.Consola.insert(INSERT,'BER: '+format(BER_actual)+'\n')
                                 self.Interfaz.update()
 
                                 if self.tramasRecibidas.shape[0] == trama.numeroTramas:
@@ -269,44 +283,27 @@ class Interfaz:
                             break
                         else:
                             print("Trama no valida")
+                            BER_actual=self.TramasTransmitidas.compararTrama(trama.numeroDeTrama,bits)
                             if trama.numeroDeTrama <= self.numTramas and trama.numeroDeTrama !=0 :
-                                BER_actual=self.TramasTransmitidas.compararTrama(self.tramaAnterior,bits)
                                 self.tramaAnterior = trama.numeroDeTrama
-                                print(self.errores)
                     else:
                         if trama.numeroDeTrama <= self.numTramas and trama.numeroDeTrama !=0 :
                             self.Consola.insert(INSERT,'No se encontraron tramas: '+format(self.tramaAnterior)+'\n')
-                            BER_actual=self.TramasTransmitidas.compararTrama(self.tramaAnterior,bits)
-                            self.errores[self.tramaAnterior-1]=BER_actual
-                            self.Consola.insert(INSERT,'Tramas ber '+format(self.errores)+'\n')
                             self.tramaAnterior = trama.numeroDeTrama
-                            print(self.errores)
+                            self.errores[self.tramaAnterior-1]=BER_actual
                         break
                     c+=1
                     nextF = cv2.imread('Nuevo16-'+str(c)+'.png')
-                    print("ultimo BER ",BER_actual)
-                print("BER actual ",BER_actual)
-                self.Consola.insert(INSERT,'BER de la trama: '+format(BER_actual)+'\n')
-                if BER_actual !=0:
-                    self.tramasInvalidas += 1
-                    self.BER=self.BER+BER_actual
-                    print("BER Acumulado: ",self.BER)
-                    self.tramasBitsErroneos +=1
-                    #self.errores[trama.numeroDeTrama-1]=BER_actual
-                    #self.Consola.insert(INSERT,'Tramas ber '+format(self.errores)+'\n')
-                    self.Consola.insert(INSERT,'Tramas con errores '+format(self.tramasBitsErroneos)+'\n')
-                    self.Consola.insert(INSERT,'BER de la trama: '+format(self.BER)+'\n')
-                    self.Consola.insert(END, "")
-                    self.Consola.see(END)
-
-                    print("------------------------------------------BER:",self.BER)
+                #if BER_actual !=0:
+                #    self.tramasInvalidas += 1
+                #    print("Se sumo trama invalida: ",trama.numeroDeTrama)
                 print("numero de tramas: ", trama.numeroTramas)
                 print("numero de trama: ", trama.numeroDeTrama)
             #En caso de ser diferente
             else:
                 #Verifica que el número de trama sea válido y guarda el numero de trama
                 self.Consola.insert(INSERT,'Trama actual: '+format(trama.numeroDeTrama)+'\n')
-                if trama.numeroTramas == self.numTramas and trama.numeroDeTrama<=self.numTramas and trama.numeroDeTrama>0: 
+                if trama.numeroTramas == self.numTramas and trama.numeroDeTrama<=self.numTramas and trama.numeroDeTrama>0:
                     self.tramaAnterior = trama.numeroDeTrama
                     self.tramaAnteriorValida = trama.tramaValida
                     bits = matriz.mapeoaBit()
@@ -316,6 +313,7 @@ class Interfaz:
                     if trama.numeroDeTrama in self.tramasRecibidas:
                         print("La trama ya esta")
                         self.Consola.insert(INSERT,'La trama ya esta\n')
+                        self.errores[trama.numeroDeTrama-1]=0
                         if trama.tramaValida == True:
                             print("trama valida")
                             self.Consola.insert(INSERT,'trama valida\n')
@@ -326,8 +324,7 @@ class Interfaz:
                         self.Consola.see(END)
                     else:
                         #self.Consola.insert(INSERT,'Entro al else: \n')
-                        if trama.tramaValida == True and trama.numeroDeTrama>0:
-                            self.tramasValidas +=1
+                        if trama.tramaValida == True and trama.numeroDeTrama>0 and trama.numeroDeTrama<self.numTramas:
                             self.tramasRecibidas = np.concatenate((self.tramasRecibidas,trama.numeroDeTrama),axis=None)
                             print("Tramas recibidas: ",self.tramasRecibidas)
                             self.TramasFaltantes=self.numTramas - self.tramasRecibidas.shape[0]
@@ -338,44 +335,38 @@ class Interfaz:
                             #self.Consola.insert(INSERT,'Entro al if \n')
                             self.Interfaz.update()
 
-                            if self.TramaInicial == trama.numeroDeTrama+1:
-                                #Tramas que llegaron
-                                #self.tramasValidas = self.tramasRecibidas.shape[0]
-                                #Tramas totales
-                                #self.tramasTotales = self.tramasValidas + self.tramasInvalidas
-                                #Calculo de FER
-                                #self.FER = self.tramasInvalidas / self.tramasTotales
 
-                                if self.tramasBitsErroneos != 0:
-                                    promedioBER = self.BER / self.tramasBitsErroneos
-                                else:
-                                    promedioBER = 0
-                                self.TBER.set("BER: "+format(promedioBER))
-                                print("BER promedio: ",promedioBER)
-                                self.BER = 0
-                                self.FER = 0
-                                self.numTramas = 0
-                                self.ciclos = 1
-                                self.TramaInicial = 0
+                            #if self.tramasRecibidas.shape[0] == trama.numeroTramas:
+                            #    for h in range(trama.numeroTramas):
+                            #        self.datos = np.concatenate((self.datos,self.cargaUtil[h]),axis=None)
+                            #    print("Se recibieron todas las tramas")
+                            #    self.tiempoFinal = time.time()
+                            #    self.tiempoTotal = self.tiempoFinal - self.tiempoInicial
+                             #   print("Bits recibidos: ",self.datos.shape[0])
+                            #    print("Tiempo: ",self.tiempoTotal)
+                            #    self.tramasValidas = self.tramasRecibidas.shape[0]
+                            #    self.tramasInvalidas=sum(1 for item in self.errores if item!=0 and item!=-1)
+                            
+                            #    self.errores_totales=sum(item for item in self.errores if item!=0 and item!=-1)
 
-                            if self.tramasRecibidas.shape[0] == trama.numeroTramas:
-                                for h in range(trama.numeroTramas):
-                                    self.datos = np.concatenate((self.datos,self.cargaUtil[h]),axis=None)
-                                print("Se recibieron todas las tramas")
-                                self.tiempoFinal = time.time()
-                                self.tiempoTotal = self.tiempoFinal - self.tiempoInicial
-                                print("Bits recibidos: ",self.datos.shape[0])
-                                print("Tiempo: ",self.tiempoTotal)
-                                self.tramasValidas = self.tramasRecibidas.shape[0]
+                            #    self.tramasTotales = self.tramasValidas + self.tramasInvalidas
+                            #    bitTotales=self.tramasTotales*self.bitsTrama
+                            #    self.FER = self.tramasInvalidas / self.tramasTotales
+                            #    self.TFER.set("FER: " + format(self.FER))
+                             #   self.BER=self.errores_totales/bitTotales
+                             #   self.TBER.set("BER: " + format(self.BER))
+                             #   self.Consola.insert(INSERT,'Bits erroneos:'+format(self.errores_totales)+' \n')
+                             #   self.Consola.insert(INSERT,'Bits Recibidoss:'+format(bitTotales)+' \n')
+                            #    self.Consola.insert(INSERT,'BER:'+format(self.BER)+' \n')
+                            #    self.Consola.insert(INSERT,'Frames erroneos:'+format(self.tramasInvalidas)+' \n')
+                             #   self.Consola.insert(INSERT,'Frames Recibidos:'+format(self.tramasTotales)+' \n')
+                             #   self.Consola.insert(INSERT,'FER:'+format(self.FER)+' \n')
+                              #  mb.showinfo(message="Se recibieron todas las tramas", title="Título")
+                              #  file = open('texto.txt','a')
+                              #  file.write(self.frombits(self.datos))
+                              #  file.close()
+                              #  subprocess.run(["notepad","texto.txt"])
 
-                                tramasTotales = self.tramasValidas + self.tramasInvalidas
-                                self.FER = self.tramasInvalidas / tramasTotales
-                                self.TFER.set("FER: " + format(self.FER))
-                                mb.showinfo(message="Se recibieron todas las tramas", title="Título")
-                                file = open('texto.txt','a')
-                                file.write(self.frombits(self.datos))
-                                file.close()
-                                subprocess.run(["notepad","texto.txt"])
                         else:
                             #print("invalida")
                             #BER_calculado=self.TramasTransmitidas.compararTrama(trama.numeroDeTrama,bits)
@@ -387,6 +378,47 @@ class Interfaz:
                             self.Consola.see(END)
 
                             self.tramaAnteriorValida = False
+                elif len(self.tramasRecibidas)!=0 and ((int(self.numeroColores.get()) ==2 and trama.numeroDeTrama == 255 and trama.numeroTramas == 255) or (int(self.numeroColores.get()) ==4 and trama.numeroDeTrama == 0 and trama.numeroTramas == 0) or (int(self.numeroColores.get()) ==8 and trama.numeroDeTrama == 146 and trama.numeroTramas == 36)):
+                    #Tramas que llegaron
+                    #self.tramasValidas = self.tramasRecibidas.shape[0]
+                    #Tramas totales
+                    #self.self.tramasTotales = self.tramasValidas + self.tramasInvalidas
+                    #Calculo de FER
+                    #self.FER = self.tramasInvalidas / self.self.tramasTotales
+                    self.Consola.insert(INSERT,'Entro a Elif\n')
+                    print("*******************************>>>> Entro",len(self.tramasRecibidas))
+                    self.Consola.insert(END, "")
+                    self.Consola.see(END)
+                    self.tramasValidas =self.tramasValidas+ self.tramasRecibidas.shape[0]
+                    self.tramasInvalidas=self.tramasInvalidas+sum(1 for item in self.errores if item!=0 and item!=-1)
+                    self.errores_totales=self.errores_totales+sum(item for item in self.errores if item!=0 and item!=-1)
+                    self.Consola.insert(INSERT,'Bits ERRORES:'+format(self.errores)+' \n')
+                    self.tramasTotales = self.tramasValidas + self.tramasInvalidas
+                    bitTotales=self.tramasTotales*self.bitsTrama
+                    self.FER =self.tramasInvalidas / self.tramasTotales
+                    self.TFER.set("FER: " + format(self.FER))
+                    self.BER=self.errores_totales/bitTotales
+                    self.TBER.set("BER: " + format(self.BER))
+                    self.Consola.insert(INSERT,'Bits erroneos:'+format(self.errores_totales)+' \n')
+                    self.Consola.insert(INSERT,'Bits Recibidoss:'+format(bitTotales)+' \n')
+                    self.Consola.insert(INSERT,'BER:'+format(self.BER)+' \n')
+                    self.Consola.insert(INSERT,'Frames erroneos:'+format(self.tramasInvalidas)+' \n')
+                    self.Consola.insert(INSERT,'Frames Recibidos:'+format(self.tramasTotales)+' \n')
+                    self.Consola.insert(INSERT,'FER:'+format(self.FER)+' \n')
+                    self.Consola.insert(END, "")
+                    self.Consola.see(END)
+                    self.errores=(-1)*np.ones(self.numTramas)
+                    self.mostrarRecibidas = str(self.mostrarRecibidas) + str(self.tramasRecibidas) + ","
+                    self.TR.set("Tramas Recibidas: "+format(self.mostrarRecibidas))
+                    self.tramasRecibidas = np.array([],dtype=int)
+                    print("Longitud del array: ",len(self.tramasRecibidas))
+                    self.Interfaz.update()
+                    
+                    #self.BER = 0
+                    #self.FER = 0
+                    #self.numTramas = 0
+                    #self.ciclos = 1
+                    #self.TramaInicial = 0
         return c    
         
         
@@ -399,42 +431,44 @@ class Interfaz:
             print("Procesando: Nuevo16-"+str(c))
             dst2 = self.transformacionPerspectiva(frame,c)
             nombreImagen = 'Nuevo_16-'+str(c)+'.png'
-            try:
-                imgl = Image.open(nombreImagen)
-                imgl.thumbnail((300,300), Image.ANTIALIAS)
-                imgScreen = ImageTk.PhotoImage(imgl)
-                self.l1.configure(image = imgScreen)
-                self.Interfaz.update()
-                c = self.leerTramas(dst2,c)
-            except:
-                print('No leyo la imagen')
+            #try:
+            imgl = Image.open(nombreImagen)
+            imgl.thumbnail((300,300), Image.ANTIALIAS)
+            imgScreen = ImageTk.PhotoImage(imgl)
+            self.l1.configure(image = imgScreen)
+            self.Interfaz.update()
+            c = self.leerTramas(dst2,c)
+            #except:
+             #   print('No leyo la imagen')
             c = c+1
             frame = cv2.imread('Nuevo16-'+str(c)+'.png')
         
-        #Tramas que llegaron
-        self.tramasValidas = self.tramasRecibidas.shape[0]
-        tramasTotales = self.tramasValidas + self.tramasInvalidas
-        self.FER = self.tramasInvalidas / tramasTotales
+        
+        self.tramasInvalidas=self.tramasInvalidas+sum(1 for item in self.errores if item!=0 and item!=-1)
+        self.errores_totales=self.errores_totales+sum(item for item in self.errores if item!=0 and item!=-1)
+
+        self.tramasTotales += self.tramasValidas + self.tramasInvalidas
+        bitTotales=self.tramasTotales*self.bitsTrama
+        self.FER =self.tramasInvalidas / self.tramasTotales
+        self.TFER.set("FER: " + format(self.FER))
+        self.BER=self.errores_totales/bitTotales
+        self.TBER.set("BER: " + format(self.BER))
 
         self.Consola.insert(INSERT,'*****************************\n')
         self.Consola.insert(INSERT,'Se acabaron las imagenes\n')
-        self.Consola.insert(INSERT,'Tramas validas:'+format(self.tramasValidas)+'\n')
-        self.Consola.insert(INSERT,'Tramas invalidas:'+format(self.tramasInvalidas)+'\n')
-        self.Consola.insert(INSERT,'Tramas totales:'+format(tramasTotales)+'\n')
+        self.Consola.insert(INSERT,'Bits erroneos:'+format(self.errores_totales)+' \n')
+        self.Consola.insert(INSERT,'Bits Recibidoss:'+format(bitTotales)+' \n')
+        self.Consola.insert(INSERT,'BER:'+format(self.BER)+' \n')
+        self.Consola.insert(INSERT,'Frames erroneos:'+format(self.tramasInvalidas)+' \n')
+        self.Consola.insert(INSERT,'Frames Recibidos:'+format(self.tramasTotales)+' \n')
+        self.Consola.insert(INSERT,'FER:'+format(self.FER)+' \n')
         self.Consola.insert(END, "")
         self.Consola.see(END)
 
         print("Tramas validas: ",self.tramasValidas)
         print("Tramas invalidas: ",self.tramasInvalidas)
-        print("Tramas totales: ", tramasTotales)
+        print("Tramas totales: ", self.tramasTotales)
 
-        self.TFER.set("FER: " + format(self.FER))
-        if self.tramasBitsErroneos != 0:
-            promedioBER = self.BER / self.tramasBitsErroneos
-        else:
-            promedioBER = 0
-        self.TBER.set("BER: "+format(promedioBER))
-        print("BER promedio: ",promedioBER)
     
     def transformacionPerspectiva(self,frame,c):
             bilFilter = cv2.bilateralFilter(frame,9,75,75)
@@ -574,9 +608,9 @@ class Interfaz:
 
         self.tiempoInicial = time.time()
         if self.patronesPorSegundo.get() == 30:
-            self.cap = VideoCaptureAsync('http://192.168.1.68:4747/video',1920,1080,30)
+            self.cap = VideoCaptureAsync(1,1920,1080,30)
         else:
-            self.cap = VideoCaptureAsync('http://192.168.1.68:4747/video',1280,720,60)
+            self.cap = VideoCaptureAsync(1,1280,720,60)
         self.cap.start()
 
         contador = 0
@@ -604,6 +638,7 @@ class Interfaz:
         self.FPS = contador/segundos
         self.TFPS.set("FPS: "+format(self.FPS))
         top.destroy()
+        self.cap.stop()
         hilo2 = threading.Thread(target=self.leerFrames)
         hilo2.start()          
 
