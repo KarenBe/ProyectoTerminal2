@@ -3,6 +3,7 @@ from tkinter import ttk
 from tkinter import scrolledtext as st
 from tkinter import filedialog as fd
 from tkinter import messagebox as mb
+from tkinter import Text
 from time import sleep
 from time import time
 from threading import Lock
@@ -33,8 +34,6 @@ print(cv2.__version__)
 class Interfaz:
     def __init__(self):
         self.Interfaz = Tk()
-        self.Interfaz.state('zoomed')
-        self.Interfaz.configure(bg='#F1F1F1')
         self.cap = None
         self.hilo2 = None
         self.sincronizacionAnterior=[[255,255,255],[255,255,255],[255,255,255]]
@@ -66,72 +65,77 @@ class Interfaz:
         self.tramasTotales=0
         self.valor = 0
         self.mostrarRecibidas = ""
-        
-        #PATRONES POR SEGUNDO
-        self.etiqueta = Label(text="FPS: ").place(relx=0.05,rely=0.15)
-        self.patronesPorSegundo = ttk.Combobox(state="readonly", values=[30,60])
-        self.patronesPorSegundo.place(relx=0.15,rely=0.15)
-        self.patronesPorSegundo.current(0)
+
+        #Caracteristicas de la ventana
+        self.Interfaz.title("Receptor")
+        self.Interfaz.geometry("1093x500+0+0")
+        self.Interfaz.resizable(width=False, height=False)
+        self.Interfaz.configure(bg='#F1F1F1')
 
         #TAMAÑO DE LA MATRIZ
-        self.etiqueta2 = Label(text="Tamaño de la matriz: ").place(relx=0.05,rely=0.2)
-        self.tamanoMatriz = ttk.Combobox(state="readonly", values=[8,10,12,14,16,100])
-        self.tamanoMatriz.place(relx=0.15,rely=0.2)
+        self.etiqueta2 = Label(text="Tamaño de la matriz").place(relx=0.04,rely=0.1)
+        self.tamanoMatriz = ttk.Combobox(state="readonly", values=[8,10,12,14,16])
+        self.tamanoMatriz.place(relx=0.155,rely=0.1,width=82)
         self.tamanoMatriz.current(0)
         
         #NUMERO DE COLORES
-        self.etiqueta3 = Label(text="Número de colores").place(relx=0.05,rely=0.25)
+        self.etiqueta3 = Label(text="Número de colores").place(relx=0.04,rely=0.17)
         self.numeroColores = ttk.Combobox(state="readonly", values=[2,4,8])
-        self.numeroColores.place(relx=0.15,rely=0.25)
+        self.numeroColores.place(relx=0.155,rely=0.17,width=82)
         self.numeroColores.current(0)
 
         #SEGUNDOS
-        self.etiqueta3 = Label(text="Segundos capturados").place(relx=0.05,rely=0.3)
+        self.etiqueta3 = Label(text="Segundos capturados").place(relx=0.04,rely=0.24)
         self.segundos = ttk.Combobox(state="readonly", values=[1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,22,24,26,28,30])
-        self.segundos.place(relx=0.15,rely=0.3)
+        self.segundos.place(relx=0.155,rely=0.24,width=82)
         self.segundos.current(0)
-
-        self.borrarImagenes()
-
-        #self.hilo = threading.Thread(target=self.IniciarCaptura2, 
-        #                    args=(5,))
-
-        self.transmitir = Button(self.Interfaz,text="Comenzar Captura",command=self.IniciarProcesamiento).place(relx=0.05,rely=0.35)
-        self.transmitir = Button(self.Interfaz,text="Parar Captura",command=self.PararCaptura).place(relx=0.15,rely=0.35)
+        
+        #Botones
+        self.transmitir = Button(self.Interfaz,text="Comenzar Captura",command=self.IniciarProcesamiento).place(relx=0.04,rely=0.31)
+        self.transmitir = Button(self.Interfaz,text="Parar Captura",command=self.PararCaptura).place(relx=0.155,rely=0.31)
         #self.scrolledtext1 = st.ScrolledText(self.Interfaz, width=30, height=20)
         #self.scrolledtext1.place(relx=0.1, rely=0.35)
         
 
         #PRUEBA DE IMAGEN EN LABEL
-        self.l1 = tkk.Label(self.Interfaz, text="   ", borderwidth=4, relief="groove")
-        self.l1.place(relx=0.30,rely=0.1,width=300, height=300)
+        self.l1 = tkk.Label(self.Interfaz, text="   ", borderwidth=2, relief="groove")
+        self.l1.place(relx=0.25,rely=0.08,width=350, height=350)
         
         #TRAMAS
         self.TR = StringVar()
         self.TF = StringVar()
-        self.etiquetaR = Label(self.Interfaz,textvariable=self.TR).place(relx=0.6,rely=0.15)
-        self.etiquetaFa = Label(self.Interfaz,textvariable=self.TF).place(relx=0.6,rely=0.35)
+        self.etiquetaR = Label(self.Interfaz,textvariable=self.TR).place(relx=0.59,rely=0.1)
+        self.etiquetaFa = Label(self.Interfaz,textvariable=self.TF).place(relx=0.59,rely=0.28)
         self.TR.set("Tramas Recibidas: ")
         self.TF.set("Tramas Faltantes: ")
         
+        self.TTF = Text(self.Interfaz, height = 3, state="normal",width=50)
+        self.TTF.place(relx=0.59, rely=0.15)
+        self.TTF.configure(state="normal")
+        self.TTF.insert(INSERT,"")
+
         #FPS
         self.TFPS = StringVar()
-        self.etiquetaFPS = Label(self.Interfaz,textvariable=self.TFPS).place(relx=0.05,rely=0.4)
+        self.etiquetaFPS = Label(self.Interfaz,textvariable=self.TFPS).place(relx=0.04,rely=0.42)
         self.TFPS.set("FPS: ")
+
         #FER
         self.TFER = StringVar()
-        self.etiquetaF = Label(self.Interfaz,textvariable=self.TFER).place(relx=0.6,rely=0.4)
+        self.etiquetaF = Label(self.Interfaz,textvariable=self.TFER).place(relx=0.04,rely=0.49)
         self.TFER.set("FER: ")
+
         #BER
         self.TBER = StringVar()
-        self.etiquetaB = Label(self.Interfaz,textvariable=self.TBER).place(relx=0.6,rely=0.45)
+        self.etiquetaB = Label(self.Interfaz,textvariable=self.TBER).place(relx=0.04,rely=0.56)
         self.TBER.set("BER: ")
 
-        self.Consola = st.ScrolledText(self.Interfaz, width = 50, height = 15, wrap = WORD, background ='White')
+        #Consola
+        self.etiquetaConsola = Label(self.Interfaz,text="Estado de procesamiento: ").place(relx=0.59,rely=0.34)
+        self.Consola = st.ScrolledText(self.Interfaz, width = 50, height = 12, wrap = WORD, background ='White')
         self.Consola.grid(row = 0, column = 1)
-        self.Consola.place(relx=0.6,rely=0.5)
+        self.Consola.place(relx=0.59,rely=0.39)
 
-
+        self.borrarImagenes()
         self.Interfaz.mainloop()
 
     def borrarImagenes(self):
@@ -185,17 +189,16 @@ class Interfaz:
                         self.cargaUtil = np.ones((trama.numeroTramas,1),dtype=int)
                         self.cargaUtil = self.cargaUtil.tolist()
                     self.tramasRecibidas = np.concatenate((self.tramasRecibidas,trama.numeroDeTrama),axis=None)
-                    
+                    self.TTF.insert(END,format(trama.numeroDeTrama) + ",")
                     print("Tramas recibidas: ",self.tramasRecibidas)
                     self.cargaUtil[trama.numeroDeTrama-1] = trama.cargaUtil
-                    self.tramasValidas += 1
                     print("valida")
                     self.TramasTransmitidas=TramaBER(self.numTramas,int(self.numeroColores.get()),int(self.tamanoMatriz.get()))
                     self.TramasTransmitidas.generarTramas()
                     errores_BER = self.TramasTransmitidas.compararTrama(trama.numeroDeTrama,bits)
                     self.errores[trama.numeroDeTrama-1]=errores_BER
                     self.Consola.insert(INSERT,'Primera Trama\n')
-                    self.TR.set("Tramas Recibidas: "+format(self.mostrarRecibidas)+format(self.tramasRecibidas))
+                    self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
                     self.TF.set("Tramas Faltantes: "+format(self.numTramas-1))
                     self.Consola.insert(END, "")
                     self.Consola.see(END)
@@ -237,7 +240,7 @@ class Interfaz:
                     dst = self.transformacionPerspectiva(nextF,c)
                     nombreImagen = 'Nuevo_16-'+str(c)+'.png'
                     imgl = Image.open(nombreImagen)
-                    imgl.thumbnail((300,300), Image.ANTIALIAS)
+                    imgl.thumbnail((350,350), Image.ANTIALIAS)
                     imgScreen = ImageTk.PhotoImage(imgl)
                     self.l1.configure(image = imgScreen)
                     imagen = coloresReferencia(dst,int(self.tamanoMatriz.get()),int(self.numeroColores.get()))
@@ -252,18 +255,19 @@ class Interfaz:
                     if self.tramaAnterior == trama.numeroDeTrama:
 
                         if trama.tramaValida == True:
-                            self.tramasValidas +=1
                             if trama.numeroDeTrama in self.tramasRecibidas:
                                 print("Ya esta")
                             else:
                                 BER_actual=0
                                 self.tramasRecibidas = np.concatenate((self.tramasRecibidas,trama.numeroDeTrama),axis=None)
                                 print("Tramas recibidas: ",self.tramasRecibidas)
+                                self.TTF.insert(END,format(trama.numeroDeTrama) + ",")
                                 self.TramasFaltantes=self.numTramas - self.tramasRecibidas.shape[0]
                                 print("Tramas faltantes: ",self.TramasFaltantes)
                                 self.cargaUtil[trama.numeroDeTrama-1] = trama.cargaUtil
                                 self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
                                 self.TF.set("Tramas Faltantes: "+format(self.TramasFaltantes))
+                                self.errores[trama.numeroDeTrama-1] = 0
                                 self.Consola.insert(INSERT,'Ya se encontró una trama : '+format(trama.numeroDeTrama)+'\n')
                                 self.Interfaz.update()
 
@@ -326,6 +330,7 @@ class Interfaz:
                         #self.Consola.insert(INSERT,'Entro al else: \n')
                         if trama.tramaValida == True and trama.numeroDeTrama>0 and trama.numeroDeTrama<self.numTramas:
                             self.tramasRecibidas = np.concatenate((self.tramasRecibidas,trama.numeroDeTrama),axis=None)
+                            self.TTF.insert(END,format(trama.numeroDeTrama) + ",")
                             print("Tramas recibidas: ",self.tramasRecibidas)
                             self.TramasFaltantes=self.numTramas - self.tramasRecibidas.shape[0]
                             print("Tramas faltantes: ",self.TramasFaltantes)
@@ -376,8 +381,8 @@ class Interfaz:
                             self.Consola.insert(INSERT,'trama invalida\n')
                             self.Consola.insert(END, "")
                             self.Consola.see(END)
-
                             self.tramaAnteriorValida = False
+
                 elif len(self.tramasRecibidas)!=0 and ((int(self.numeroColores.get()) ==2 and trama.numeroDeTrama == 255 and trama.numeroTramas == 255) or (int(self.numeroColores.get()) ==4 and trama.numeroDeTrama == 0 and trama.numeroTramas == 0) or (int(self.numeroColores.get()) ==8 and trama.numeroDeTrama == 146 and trama.numeroTramas == 36)):
                     #Tramas que llegaron
                     #self.tramasValidas = self.tramasRecibidas.shape[0]
@@ -393,9 +398,9 @@ class Interfaz:
                     self.tramasInvalidas=self.tramasInvalidas+sum(1 for item in self.errores if item!=0 and item!=-1)
                     self.errores_totales=self.errores_totales+sum(item for item in self.errores if item!=0 and item!=-1)
                     self.Consola.insert(INSERT,'Bits ERRORES:'+format(self.errores)+' \n')
-                    self.tramasTotales = self.tramasValidas + self.tramasInvalidas
-                    bitTotales=self.tramasTotales*self.bitsTrama
-                    self.FER =self.tramasInvalidas / self.tramasTotales
+                    tramasTotalCiclo = self.tramasValidas + self.tramasInvalidas
+                    bitTotales=tramasTotalCiclo*self.bitsTrama
+                    self.FER =self.tramasInvalidas / tramasTotalCiclo
                     self.TFER.set("FER: " + format(self.FER))
                     self.BER=self.errores_totales/bitTotales
                     self.TBER.set("BER: " + format(self.BER))
@@ -403,13 +408,14 @@ class Interfaz:
                     self.Consola.insert(INSERT,'Bits Recibidoss:'+format(bitTotales)+' \n')
                     self.Consola.insert(INSERT,'BER:'+format(self.BER)+' \n')
                     self.Consola.insert(INSERT,'Frames erroneos:'+format(self.tramasInvalidas)+' \n')
-                    self.Consola.insert(INSERT,'Frames Recibidos:'+format(self.tramasTotales)+' \n')
+                    self.Consola.insert(INSERT,'Frames Recibidos:'+format(tramasTotalCiclo)+' \n')
                     self.Consola.insert(INSERT,'FER:'+format(self.FER)+' \n')
                     self.Consola.insert(END, "")
                     self.Consola.see(END)
                     self.errores=(-1)*np.ones(self.numTramas)
-                    self.mostrarRecibidas = str(self.mostrarRecibidas) + str(self.tramasRecibidas) + ","
-                    self.TR.set("Tramas Recibidas: "+format(self.mostrarRecibidas))
+                    #self.mostrarRecibidas = str(self.mostrarRecibidas) + str(self.tramasRecibidas) + ","
+                    self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
+                    #self.TTF.insert(END,format(trama.numeroDeTrama) + ",")
                     self.tramasRecibidas = np.array([],dtype=int)
                     print("Longitud del array: ",len(self.tramasRecibidas))
                     self.Interfaz.update()
@@ -433,7 +439,7 @@ class Interfaz:
             nombreImagen = 'Nuevo_16-'+str(c)+'.png'
             #try:
             imgl = Image.open(nombreImagen)
-            imgl.thumbnail((300,300), Image.ANTIALIAS)
+            imgl.thumbnail((350,350), Image.ANTIALIAS)
             imgScreen = ImageTk.PhotoImage(imgl)
             self.l1.configure(image = imgScreen)
             self.Interfaz.update()
@@ -443,11 +449,11 @@ class Interfaz:
             c = c+1
             frame = cv2.imread('Nuevo16-'+str(c)+'.png')
         
-        
+        self.tramasValidas =self.tramasValidas + self.tramasRecibidas.shape[0]
         self.tramasInvalidas=self.tramasInvalidas+sum(1 for item in self.errores if item!=0 and item!=-1)
         self.errores_totales=self.errores_totales+sum(item for item in self.errores if item!=0 and item!=-1)
-
-        self.tramasTotales += self.tramasValidas + self.tramasInvalidas
+        
+        self.tramasTotales = self.tramasValidas + self.tramasInvalidas
         bitTotales=self.tramasTotales*self.bitsTrama
         self.FER =self.tramasInvalidas / self.tramasTotales
         self.TFER.set("FER: " + format(self.FER))
@@ -455,6 +461,7 @@ class Interfaz:
         self.TBER.set("BER: " + format(self.BER))
 
         self.Consola.insert(INSERT,'*****************************\n')
+        mb.showinfo(message="Se recibieron todas las tramas", title="Título")
         self.Consola.insert(INSERT,'Se acabaron las imagenes\n')
         self.Consola.insert(INSERT,'Bits erroneos:'+format(self.errores_totales)+' \n')
         self.Consola.insert(INSERT,'Bits Recibidoss:'+format(bitTotales)+' \n')
@@ -549,12 +556,12 @@ class Interfaz:
                     #lineas verticales
                         pt1 = ((x+1)*tcuadrado,0)
                         pt2 = ((x+1)*tcuadrado,tamanoFinal)
-                        cv2.line(dst2,pt1,pt2,(0,255,0),1)
+                        #cv2.line(dst2,pt1,pt2,(0,255,0),1)
 
                         #lineas horizontales
                         pt1 = (0,(x+1)*tcuadrado)
                         pt2 = (tamanoFinal,(x+1)*tcuadrado)
-                        cv2.line(dst2,pt1,pt2,(0,255,0),1)
+                        #cv2.line(dst2,pt1,pt2,(0,255,0),1)
 
                     #cv2.imshow("Transformacion2", dst2)
                     #coloresR = coloresReferencia(dst2,self.tamanoMatriz.get(),self.numeroColores.get())
@@ -606,13 +613,8 @@ class Interfaz:
         msg = Message(top,width=300,text="                     Iniciando camara...                  ")
         msg.pack()
 
-        self.tiempoInicial = time.time()
-        if self.patronesPorSegundo.get() == 30:
-            self.cap = VideoCaptureAsync(1,1920,1080,30)
-        else:
-            self.cap = VideoCaptureAsync(1,1280,720,60)
+        self.cap = VideoCaptureAsync(1,1920,1080,30)
         self.cap.start()
-
         contador = 0
         inicial = time.time()
         limite = inicial + segundos
@@ -748,12 +750,12 @@ class Interfaz:
                                 #lineas verticales
                                     pt1 = ((x+1)*tcuadrado,0)
                                     pt2 = ((x+1)*tcuadrado,tamanoFinal)
-                                    cv2.line(dst2,pt1,pt2,(0,255,0),1)
+                                    #cv2.line(dst2,pt1,pt2,(0,255,0),1)
 
                                     #lineas horizontales
                                     pt1 = (0,(x+1)*tcuadrado)
                                     pt2 = (tamanoFinal,(x+1)*tcuadrado)
-                                    cv2.line(dst2,pt1,pt2,(0,255,0),1)
+                                    #cv2.line(dst2,pt1,pt2,(0,255,0),1)
                                 cv2.imshow("Transformacion2", dst2)
 
                                 coloresR = coloresReferencia(dst2,self.tamanoMatriz.get(),self.numeroColores.get())
