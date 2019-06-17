@@ -139,20 +139,22 @@ class Interfaz:
         self.Interfaz.mainloop()
 
     def borrarImagenes(self):
-        c=0
-        img = cv2.imread('Nuevo16-0.png')
-        while img is not None:
-            remove('Nuevo16-'+str(c)+'.png')
-            c = c+1
-            img = cv2.imread('Nuevo16-'+str(c)+'.png')
+        for file in os.listdir("."):
+            if os.path.isfile(file) and file.startswith("Nuevo16-"):
+                os.remove(file)
 
         for file in os.listdir("."):
             if os.path.isfile(file) and file.startswith("Nuevo_"):
                 os.remove(file)
 
+        for file in os.listdir("."):
+            if os.path.isfile(file) and file.startswith("NuevoNegro"):
+                os.remove(file)
         
     def frombits(self,bits):
         chars = []
+        fin = math.ceil(bits.shape[0]/8)
+        bits = bits[:fin*8]
         for b in range(int(len(bits) / 8)):
             byte = bits[b*8:(b+1)*8]
             chars.append(chr(int(''.join([str(bit) for bit in byte]), 2)))
@@ -197,8 +199,8 @@ class Interfaz:
                     self.TramasTransmitidas.generarTramas()
                     errores_BER = self.TramasTransmitidas.compararTrama(trama.numeroDeTrama,bits)
                     self.errores[trama.numeroDeTrama-1]=errores_BER
-                    self.Consola.insert(INSERT,'Primera Trama\n')
-                    self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
+                    self.Consola.insert(INSERT,'Primera Trama recibida correctamente\n')
+                    #self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
                     self.TF.set("Tramas Faltantes: "+format(self.numTramas-1))
                     self.Consola.insert(END, "")
                     self.Consola.see(END)
@@ -216,8 +218,8 @@ class Interfaz:
             print("Trama actual: ",trama.numeroDeTrama)
             print("Trama validez: ",self.tramaAnteriorValida)
             print("Trama numeroTRamas: ",trama.numeroTramas)
-            self.Consola.insert(INSERT,'*****************************\n')
-            self.Consola.insert(INSERT,'Trama anterior: '+format(self.tramaAnterior)+'\n')
+            self.Consola.insert(INSERT,'*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*\n')
+            #self.Consola.insert(INSERT,'Trama anterior: '+format(self.tramaAnterior)+'\n')
             self.Consola.insert(INSERT,'Trama actual: '+format(trama.numeroDeTrama)+'\n')
             self.Consola.insert(END, "")
             self.Consola.see(END)
@@ -228,7 +230,7 @@ class Interfaz:
                 self.errores[trama.numeroDeTrama-1]=errores_BER
             #Si el número de trama es igual al anterior, y la trama anterior fue invalida, procesa la siguiente
             if self.tramaAnterior == trama.numeroDeTrama and self.tramaAnteriorValida == False:
-                print("igual a la anterior, trama anterior invalida, leyendo siguiente trama...")
+                print("Trama anterior invalida, leyendo siguiente trama...")
                 print("-----------------------------------------------------------Entro a while")
                 self.Consola.insert(INSERT,'No es una trama valida, se leeran más: \n')
                 c+=1
@@ -265,7 +267,7 @@ class Interfaz:
                                 self.TramasFaltantes=self.numTramas - self.tramasRecibidas.shape[0]
                                 print("Tramas faltantes: ",self.TramasFaltantes)
                                 self.cargaUtil[trama.numeroDeTrama-1] = trama.cargaUtil
-                                self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
+                                #self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
                                 self.TF.set("Tramas Faltantes: "+format(self.TramasFaltantes))
                                 self.errores[trama.numeroDeTrama-1] = 0
                                 self.Consola.insert(INSERT,'Ya se encontró una trama : '+format(trama.numeroDeTrama)+'\n')
@@ -280,7 +282,7 @@ class Interfaz:
                                     print("Bits recibidos: ",self.datos.shape[0])
                                     print("Tiempo: ",self.tiempoTotal)
                                     mb.showinfo(message="Se recibieron todas las tramas", title="Título")
-                                    file = open('texto.txt','a')
+                                    file = open('texto.txt','w',encoding="utf-8")
                                     file.write(self.frombits(self.datos))
                                     file.close()
                                     subprocess.run(["notepad","texto.txt"])
@@ -316,7 +318,7 @@ class Interfaz:
                     #Verifica si la trama ya fue recibida
                     if trama.numeroDeTrama in self.tramasRecibidas:
                         print("La trama ya esta")
-                        self.Consola.insert(INSERT,'La trama ya esta\n')
+                        self.Consola.insert(INSERT,'Celda de sincronización igual\n')
                         self.errores[trama.numeroDeTrama-1]=0
                         if trama.tramaValida == True:
                             print("trama valida")
@@ -335,7 +337,7 @@ class Interfaz:
                             self.TramasFaltantes=self.numTramas - self.tramasRecibidas.shape[0]
                             print("Tramas faltantes: ",self.TramasFaltantes)
                             self.cargaUtil[trama.numeroDeTrama-1] = trama.cargaUtil
-                            self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
+                            #self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
                             self.TF.set("Tramas Faltantes: "+format(self.TramasFaltantes))
                             #self.Consola.insert(INSERT,'Entro al if \n')
                             self.Interfaz.update()
@@ -414,7 +416,7 @@ class Interfaz:
                     self.Consola.see(END)
                     self.errores=(-1)*np.ones(self.numTramas)
                     #self.mostrarRecibidas = str(self.mostrarRecibidas) + str(self.tramasRecibidas) + ","
-                    self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
+                    #self.TR.set("Tramas Recibidas: "+format(self.tramasRecibidas))
                     #self.TTF.insert(END,format(trama.numeroDeTrama) + ",")
                     self.tramasRecibidas = np.array([],dtype=int)
                     print("Longitud del array: ",len(self.tramasRecibidas))
@@ -462,6 +464,16 @@ class Interfaz:
 
         self.Consola.insert(INSERT,'*****************************\n')
         mb.showinfo(message="Se recibieron todas las tramas", title="Título")
+        if self.errores[0] != -1:
+            ###################################### IMPRIMIR ARCHIVO
+            for h in range(self.numTramas):
+                self.datos = np.concatenate((self.datos,self.cargaUtil[h]),axis=None)
+            file = open('texto.txt','w', encoding="utf-8")
+            print("Aquiiii",self.datos.shape)
+            file.write(self.frombits(self.datos))
+            file.close()
+            subprocess.run(["notepad","texto.txt"])
+
         self.Consola.insert(INSERT,'Se acabaron las imagenes\n')
         self.Consola.insert(INSERT,'Bits erroneos:'+format(self.errores_totales)+' \n')
         self.Consola.insert(INSERT,'Bits Recibidoss:'+format(bitTotales)+' \n')
@@ -488,7 +500,7 @@ class Interfaz:
             ret,thresh = cv2.threshold(gray,200,255,1)
             contours,h = cv2.findContours(thresh,1,2)
             #cv2.imshow('vhf',thresh)
-            cv2.imwrite("NuevoNegro.png", thresh)
+            cv2.imwrite("NuevoNegro.png"+str(c)+".png", thresh)
 
             for i,cnt in enumerate(contours):
                 approx = cv2.approxPolyDP(cnt,0.05*cv2.arcLength(cnt,True),True)
@@ -527,10 +539,11 @@ class Interfaz:
                     # Check if it is an external contour and its area is more than 100
                         if hierarchy[0,p,3] == -1 and cv2.contourArea(cnt)>300:
                             x,y,w,h = cv2.boundingRect(cnt)
-                            #cv2.rectangle(img,(x,y),(x+w,y+h),(0,0,255),2)
+                            #cv2.rectangle(img,(x,y),(x+w,y+h),(0,0,255),1)
                             #cv2.circle(img,(x,y), 2, (0,0,255), -1)
                             #print(format(x)+'--'+format(y))
                             #cv2.imshow('Segundo',img)
+                            #cv2.imwrite("N-"+str(c)+".png", img)
                             if x<=e1x+8 and y<=e1y:
                                 e1x = x
                                 e1y = y
@@ -556,12 +569,12 @@ class Interfaz:
                     #lineas verticales
                         pt1 = ((x+1)*tcuadrado,0)
                         pt2 = ((x+1)*tcuadrado,tamanoFinal)
-                        #cv2.line(dst2,pt1,pt2,(0,255,0),1)
+                        cv2.line(dst2,pt1,pt2,(0,255,0),1)
 
                         #lineas horizontales
                         pt1 = (0,(x+1)*tcuadrado)
                         pt2 = (tamanoFinal,(x+1)*tcuadrado)
-                        #cv2.line(dst2,pt1,pt2,(0,255,0),1)
+                        cv2.line(dst2,pt1,pt2,(0,255,0),1)
 
                     #cv2.imshow("Transformacion2", dst2)
                     #coloresR = coloresReferencia(dst2,self.tamanoMatriz.get(),self.numeroColores.get())
@@ -592,6 +605,7 @@ class Interfaz:
         self.cargaUtil = []
         self.datos = np.array([],dtype=int)
         self.frames = []
+        self.errores = []
         self.cont = 0
         self.numTramas = 0
         self.tramasValidas = 0
@@ -601,11 +615,20 @@ class Interfaz:
         self.tiempoTotal = 0
         self.TramasFaltantes = 0
         self.tramaAnterior = 0
-        self.TBER.set("BER: ")
-        self.TFER.set("FER: ")
-        self.TFPS.set("FPS: ")
-        self.TR.set("Tramas Recibidas: ")
-        self.TF.set("Tramas Faltantes: ")
+        self.tramasBitsErroneos = 0
+        self.FER = 0
+        self.BER = 0
+        self.FPS = 0
+        self.TramasTransmitidas = 0
+        self.tramaAnteriorValida = 0
+        self.TramaInicial = 0
+        self.ciclos = 0
+        self.TramaInv = 0
+        self.bitsTrama =0
+        self.errores_totales = 0
+        self.tramasTotales=0
+        self.valor = 0
+        self.mostrarRecibidas = ""
 
         self.borrarImagenes()
         top = Toplevel()
@@ -798,8 +821,8 @@ class Interfaz:
 
     
     def PararCaptura(self):
-        self.hilo.join()
-        self.hilo.join()
+        #self.hilo.join()
+        #self.hilo2.join()
         #cv2.destroyAllWindows()
         self.cap.stop()
         exit()
